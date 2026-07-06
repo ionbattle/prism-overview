@@ -318,7 +318,7 @@
         <p class="sub">Demonstrated on real hardware, with pass/fail gates where it counts.</p>
         <ul class="status-list">
           <li><b>Timecode survivability</b> 600 / 600 frames (100%) decoded through 8K HEVC NVENC — the QR carrier survives the encode.</li>
-          <li><b>Correlation integrity</b> injected a known +500&nbsp;ms delay at one stage; only that stage rose (+523&nbsp;ms), nothing else moved.</li>
+          <li><b>Correlation integrity</b> injected a known +500&nbsp;ms delay at the encode and SRT stages in turn — each rose alone (T0→T1 +471&nbsp;ms, T0→T2 +523&nbsp;ms) with no other stage affected. The injection gate is fully closed.</li>
           <li><b>Encode holds real-time</b> 8K60 HEVC NVENC, split-frame across 3 engines — sustained 1.0× with zero dropped frames.</li>
           <li><b>Distributed chain, correctly ordered</b> T0→T3 across two machines nests as it should: ~3.0&nbsp;s encode, +0.4&nbsp;s SRT, +0.1&nbsp;s packaging, ~3.5&nbsp;s glass-to-glass. Frame-level T1/T2 taps read current.</li>
           <li><b>Cross-machine clocks</b> µs-synced to the AWS time source, so the one-way SRT timing is trustworthy.</li>
@@ -326,10 +326,9 @@
       </div>
 
       <div class="status-col todo">
-        <div class="status-head"><h3>Still to validate</h3><span class="count">5 open</span></div>
+        <div class="status-head"><h3>Still to validate</h3><span class="count">4 open</span></div>
         <p class="sub">Coverage and robustness, in rough priority order.</p>
         <ul class="status-list">
-          <li><b>T0→T1 calibration</b> run the known-delay injection on the encode stage too, to fully close the correlation gate — T0→T2 has passed, T0→T1 hasn't been run.</li>
           <li><b>T2 sample density</b> confirm the enlarged mux receive buffer lifts T2 from a thin handful of samples to a robust count.</li>
           <li><b>T4 — CDN stage</b> measure through a real CDN edge; not yet exercised (needs a CDN manifest URL).</li>
           <li><b>T5 — player glass-to-glass</b> true source→display latency via the in-browser player decode, end to end.</li>
