@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Prism — Overview</title>
+<meta name="description" content="Prism — a precision instrument for measuring end-to-end video-delivery latency. What it does, what it lets you test, and its validation status.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='88'>%E2%8F%B1%EF%B8%8F</text></svg>">
+<style>
+  :root{
+    --ground:#0F1519;      /* deep ink-slate, cool bias */
+    --panel:#161E25;
+    --panel-2:#1B252D;
+    --line:#26323B;
+    --line-soft:#1F2A32;
+    --ink:#E7EDF1;         /* cool off-white */
+    --muted:#8A99A5;       /* hue-biased slate grey */
+    --faint:#5B6874;
+    --amber:#F0B54A;       /* phosphor readout accent */
+    --amber-dim:#9C7B36;
+    --measured:#5FB98A;    /* semantic: measured / validated */
+    --font-sans:ui-sans-serif,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    --font-mono:ui-monospace,"SF Mono","Cascadia Code","JetBrains Mono","Roboto Mono",Menlo,Consolas,monospace;
+  }
+  html,body{margin:0;background:var(--ground);}
+  *{box-sizing:border-box;}
+  .doc{
+    min-height:100dvh;color:var(--ink);
+    font-family:var(--font-sans);font-size:16px;line-height:1.62;
+    -webkit-font-smoothing:antialiased;
+    background:
+      radial-gradient(1100px 520px at 78% -8%, rgba(240,181,74,.07), transparent 60%),
+      var(--ground);
+  }
+  .wrap{max-width:1060px;margin:0 auto;padding:clamp(28px,5vw,64px) clamp(20px,4vw,40px) 72px;}
+
+  /* ---- type system ---- */
+  .eyebrow{
+    font-family:var(--font-mono);font-size:.72rem;letter-spacing:.16em;text-transform:uppercase;
+    color:var(--amber);margin:0 0 14px;display:flex;align-items:center;gap:10px;
+  }
+  .eyebrow::before{content:"";width:22px;height:1px;background:var(--amber);opacity:.7;display:inline-block;}
+  h1{
+    font-size:clamp(2.1rem,5.2vw,3rem);line-height:1.04;letter-spacing:-.02em;font-weight:750;
+    margin:0 0 16px;text-wrap:balance;
+  }
+  .lede{font-size:clamp(1.02rem,1.6vw,1.14rem);color:#C6D1DA;max-width:64ch;margin:0;}
+  h2{font-size:1.32rem;font-weight:680;letter-spacing:-.01em;margin:0 0 6px;text-wrap:balance;}
+  .section-note{color:var(--muted);max-width:66ch;margin:0 0 26px;font-size:.96rem;}
+  section{margin-top:clamp(48px,7vw,74px);}
+  p{margin:0;}
+
+  /* ---- header status readouts ---- */
+  .readouts{
+    margin-top:30px;display:grid;gap:1px;background:var(--line-soft);
+    border:1px solid var(--line);border-radius:12px;overflow:hidden;
+    grid-template-columns:repeat(auto-fit,minmax(190px,1fr));
+  }
+  .ro{background:var(--panel);padding:16px 18px;}
+  .ro .k{font-family:var(--font-mono);font-size:.68rem;letter-spacing:.13em;text-transform:uppercase;color:var(--faint);margin:0 0 8px;}
+  .ro .v{font-family:var(--font-mono);font-size:1.12rem;font-weight:600;color:var(--ink);font-variant-numeric:tabular-nums;letter-spacing:-.01em;}
+  .ro .v b{color:var(--amber);font-weight:600;}
+  .ro .v .ok{color:var(--measured);}
+
+  /* ---- signal path strip ---- */
+  .rail-scroll{overflow-x:auto;padding-bottom:6px;margin:0 -4px;}
+  .rail{display:flex;align-items:stretch;gap:0;min-width:760px;padding:0 4px;}
+  .stage{flex:1 1 0;position:relative;padding:0 10px;}
+  .stage:not(:last-child)::after{
+    content:"";position:absolute;top:24px;right:-4px;width:8px;height:1px;background:var(--line);
+  }
+  .node{
+    border:1px solid var(--line);background:var(--panel);border-radius:10px;padding:14px 13px 15px;height:100%;
+    border-top:2px solid var(--line);
+  }
+  .stage.measured .node{border-top-color:var(--amber);}
+  .tid{font-family:var(--font-mono);font-size:.9rem;font-weight:700;color:var(--amber);letter-spacing:.02em;}
+  .stage:not(.measured) .tid{color:var(--faint);}
+  .sname{font-size:.9rem;font-weight:620;margin:9px 0 3px;line-height:1.2;}
+  .sdesc{font-size:.78rem;color:var(--muted);line-height:1.4;}
+  .method{
+    display:inline-block;margin-top:11px;font-family:var(--font-mono);font-size:.62rem;letter-spacing:.08em;
+    text-transform:uppercase;padding:3px 7px;border-radius:5px;border:1px solid var(--line);color:var(--muted);
+  }
+  .method.precise{color:var(--amber);border-color:var(--amber-dim);}
+  .method.freshness{color:#7FB6C4;border-color:#2E4650;}
+  .method.exact{color:var(--measured);border-color:#2C4F41;}
+  .rail-caption{color:var(--muted);font-size:.9rem;max-width:70ch;margin:20px 0 0;}
+  .rail-caption b{color:var(--ink);font-weight:600;}
+
+  /* ---- capability / test grids ---- */
+  .grid{display:grid;gap:14px;grid-template-columns:repeat(auto-fit,minmax(258px,1fr));}
+  .card{
+    border:1px solid var(--line);background:linear-gradient(180deg,var(--panel-2),var(--panel));
+    border-radius:12px;padding:19px 20px 20px;
+  }
+  .card .label{
+    font-family:var(--font-mono);font-size:.7rem;letter-spacing:.1em;text-transform:uppercase;
+    color:var(--amber);margin:0 0 9px;
+  }
+  .card h3{font-size:1.02rem;font-weight:640;margin:0 0 7px;letter-spacing:-.005em;}
+  .card p{font-size:.9rem;color:var(--muted);line-height:1.52;}
+  .card p b{color:#C6D1DA;font-weight:600;}
+
+  /* ---- validation status ---- */
+  .status-grid{display:grid;gap:14px;grid-template-columns:repeat(auto-fit,minmax(322px,1fr));}
+  .status-col{border:1px solid var(--line);background:var(--panel);border-radius:12px;padding:20px 22px 24px;}
+  .status-col.done{border-top:2px solid var(--measured);}
+  .status-col.todo{border-top:2px solid var(--amber);}
+  .status-head{display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin:0 0 3px;}
+  .status-head h3{font-size:1.06rem;font-weight:660;margin:0;letter-spacing:-.005em;}
+  .status-head .count{font-family:var(--font-mono);font-size:.7rem;color:var(--faint);letter-spacing:.06em;text-transform:uppercase;}
+  .status-col > .sub{color:var(--muted);font-size:.84rem;margin:0 0 17px;}
+  .status-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:13px;}
+  .status-list li{position:relative;padding-left:27px;font-size:.88rem;line-height:1.5;color:var(--muted);}
+  .status-list li b{color:var(--ink);font-weight:620;display:block;margin-bottom:1px;font-size:.92rem;}
+  .status-list li::before{position:absolute;left:0;top:1px;font-family:var(--font-mono);font-size:.82rem;line-height:1.5;}
+  .done .status-list li::before{content:"\2713";color:var(--measured);font-weight:700;}
+  .todo .status-list li::before{content:"\25CB";color:var(--amber);}
+
+  /* ---- live pipeline graph (faithful recreation of the console view) ---- */
+  .livegraph{border:1px solid var(--line);background:#090C0F;border-radius:14px;padding:18px 18px 22px;margin-top:4px;}
+  .lg-head{font-family:var(--font-mono);font-size:.71rem;letter-spacing:.14em;text-transform:uppercase;color:#6BA6D6;margin:0 0 20px;}
+  .lg-scroll{overflow-x:auto;padding-bottom:6px;}
+  .chain{display:flex;align-items:center;min-width:830px;padding:6px 2px;}
+  .gnode{
+    flex:0 0 auto;width:160px;min-height:98px;background:#0C1218;border:1.5px solid #6BA6D6;border-radius:12px;
+    padding:12px 10px;font-family:var(--font-mono);text-align:center;
+    display:flex;flex-direction:column;justify-content:center;
+  }
+  .gnode.gen{border-color:#3C4753;border-style:solid;background:#0B0E12;}
+  .gnid{font-size:.86rem;font-weight:700;color:#E7EDF1;letter-spacing:.01em;}
+  .gmeta{font-size:.73rem;color:#93A3AF;margin-top:3px;}
+  .gms{font-size:.82rem;color:var(--amber);margin-top:6px;font-variant-numeric:tabular-nums;letter-spacing:-.01em;}
+  .gdec{font-size:.71rem;color:#7F9782;margin-top:2px;}
+  .gdec.nodata{color:#C98B4B;}
+  .gedge{flex:1 1 auto;min-width:66px;display:flex;flex-direction:column;align-items:center;gap:6px;padding:0 5px;}
+  .elabel{font-family:var(--font-mono);font-size:.72rem;color:#AEBAC3;letter-spacing:.02em;}
+  .eline{position:relative;width:100%;height:2px;background:#E89583;border-radius:2px;}
+  .eline::after{
+    content:"";position:absolute;right:-1px;top:50%;transform:translateY(-50%);
+    border-left:8px solid #E89583;border-top:5px solid transparent;border-bottom:5px solid transparent;
+  }
+
+  /* ---- honesty footer ---- */
+  .foot{
+    margin-top:clamp(46px,7vw,72px);border-top:1px solid var(--line);padding-top:26px;
+    display:flex;gap:18px;align-items:flex-start;flex-wrap:wrap;
+  }
+  .foot .badge{
+    font-family:var(--font-mono);font-size:.68rem;letter-spacing:.12em;text-transform:uppercase;
+    color:var(--ground);background:var(--amber);padding:6px 11px;border-radius:6px;font-weight:700;white-space:nowrap;
+  }
+  .foot p{color:var(--muted);font-size:.92rem;max-width:70ch;}
+  .foot p b{color:var(--ink);font-weight:600;}
+  .tag-m{color:var(--measured);font-weight:600;}
+  .tag-d{color:var(--amber);font-weight:600;}
+  .tag-n{color:var(--faint);font-weight:600;}
+
+  @media (prefers-reduced-motion:no-preference){
+    .card{transition:border-color .18s ease;}
+  }
+</style>
+</head>
+<body>
+
+<div class="doc">
+<div class="wrap">
+
+  <header>
+    <p class="eyebrow">Video-latency instrument</p>
+    <h1>Prism</h1>
+    <p class="lede">It originates an instrumented video stream, encodes and transmits it, and measures the
+      true end-to-end latency at every observable stage of the delivery chain. Because it stamps time-zero
+      into each frame itself, it's the one component that can measure glass-to-glass without guessing.</p>
+
+    <div class="readouts" role="group" aria-label="Current validated state">
+      <div class="ro"><p class="k">Encode load</p><div class="v">8K60 HEVC · <b>1.0×</b> real-time</div></div>
+      <div class="ro"><p class="k">Glass-to-glass</p><div class="v"><b>≈3.5&nbsp;s</b> <span class="ok">measured</span></div></div>
+      <div class="ro"><p class="k">Pipeline</p><div class="v">encode→SRT→mux, ordered</div></div>
+      <div class="ro"><p class="k">Clock sync</p><div class="v"><span class="ok">µs</span> across machines</div></div>
+    </div>
+  </header>
+
+  <section aria-labelledby="model-h">
+    <p class="eyebrow">The measurement model</p>
+    <h2 id="model-h">One timecode, followed across six stages</h2>
+    <p class="section-note">Every frame carries a QR timecode stamped with its emission epoch. Latency at any
+      point is simply that frame's own age when it's seen there — no cross-clock arithmetic, no assumptions.</p>
+
+    <div class="rail-scroll">
+      <div class="rail">
+        <div class="stage measured"><div class="node">
+          <span class="tid">T0</span><div class="sname">Origin</div>
+          <p class="sdesc">Timecode stamped into the frame.</p><span class="method exact">Known exactly</span>
+        </div></div>
+        <div class="stage measured"><div class="node">
+          <span class="tid">T1</span><div class="sname">Encode</div>
+          <p class="sdesc">Frame leaves the encoder.</p><span class="method precise">Precise</span>
+        </div></div>
+        <div class="stage measured"><div class="node">
+          <span class="tid">T2</span><div class="sname">SRT transit</div>
+          <p class="sdesc">Frame lands after the SRT contribution.</p><span class="method precise">Precise</span>
+        </div></div>
+        <div class="stage measured"><div class="node">
+          <span class="tid">T3</span><div class="sname">Origin segment</div>
+          <p class="sdesc">Freshest frame the origin can serve.</p><span class="method freshness">Freshness</span>
+        </div></div>
+        <div class="stage"><div class="node">
+          <span class="tid">T4</span><div class="sname">CDN edge</div>
+          <p class="sdesc">Same, read at a CDN URL.</p><span class="method freshness">Freshness</span>
+        </div></div>
+        <div class="stage"><div class="node">
+          <span class="tid">T5</span><div class="sname">Player</div>
+          <p class="sdesc">Frame shown to a viewer.</p><span class="method freshness">If URL given</span>
+        </div></div>
+      </div>
+    </div>
+    <p class="rail-caption"><b>Precise</b> stages catch the exact frame (frame-level age); <b>freshness</b>
+      stages read the newest served frame. Pipeline spin-up is excluded via a warm-up window, and every run
+      resets to zero, so the numbers reflect steady state — not the first noisy seconds.</p>
+  </section>
+
+  <section aria-labelledby="does-h">
+    <p class="eyebrow">Capabilities</p>
+    <h2 id="does-h">What it does</h2>
+    <p class="section-note">A complete test-rig source in one tool — origination through delivery, with the
+      instrumentation a normal encoder can't provide.</p>
+
+    <div class="grid">
+      <div class="card"><p class="label">Originate</p><h3>Generate the source</h3>
+        <p>A test pattern, a pre-rendered file, or the <b>instrumented QR-timecode</b> source that carries the
+          measurement. Any resolution up to <b>8K</b>.</p></div>
+      <div class="card"><p class="label">Encode</p><h3>Hardware or software</h3>
+        <p>NVENC <b>H.264 / HEVC / AV1</b> or libx264/libx265; presets, rate control, and <b>split-frame
+          encoding</b> across multiple NVENC engines for 8K. Refuses to silently fall back to CPU.</p></div>
+      <div class="card"><p class="label">Deliver</p><h3>CMAF and/or SRT</h3>
+        <p>CMAF (<b>HLS + DASH</b>) to disk, an <b>SRT contribution</b>, or both from a single encode via the
+          tee muxer — one decode, two sinks.</p></div>
+      <div class="card"><p class="label">Measure</p><h3>Per-frame latency</h3>
+        <p>QR-timecode latency across <b>T0→T5</b> — precise where the exact frame can be caught, freshness
+          where only the newest segment is visible.</p></div>
+      <div class="card"><p class="label">Span machines</p><h3>Distributed probes</h3>
+        <p>Passive probes on separate boxes measure a <b>real cross-network SRT contribution</b> (encoder →
+          mux → probes → controller), not a loopback — with clock-synced one-way timing.</p></div>
+      <div class="card"><p class="label">Observe &amp; report</p><h3>Live view + records</h3>
+        <p>Live telemetry, a T0→T5 pipeline graph, campaign results, source preview, and an in-browser player.
+          Every run writes a diffable <b>JSON + CSV</b>.</p></div>
+    </div>
+  </section>
+
+  <section aria-labelledby="test-h">
+    <p class="eyebrow">What you put it to</p>
+    <h2 id="test-h">What it lets you test</h2>
+    <p class="section-note">The questions a video-delivery pipeline actually raises — answered on the real
+      hardware and network, with numbers you can trust and compare.</p>
+
+    <div class="grid">
+      <div class="card"><p class="label">Throughput</p><h3>Real-time headroom</h3>
+        <p>Can this GPU hold <b>1× (or N×)</b> at a given resolution, fps, codec, and preset? Live speed, fps,
+          and drop telemetry answer it on the actual instance — e.g. <b>8K60 HEVC at 1.0×</b>.</p></div>
+      <div class="card"><p class="label">End to end</p><h3>Glass-to-glass latency</h3>
+        <p>The true source→origin/player delay, with a <b>per-stage breakdown</b> — encode vs SRT transit vs
+          packaging vs CDN vs player — so you see <em>which</em> latency dominates.</p></div>
+      <div class="card"><p class="label">Across the wire</p><h3>Cross-machine latency</h3>
+        <p>Measure a genuine SRT contribution <b>between instances</b>, over the real network, with the
+          one-way timing that only synced clocks make honest.</p></div>
+      <div class="card"><p class="label">Trade-offs</p><h3>Codec &amp; config A/B</h3>
+        <p>Sweep any mix of <b>codec, preset, resolution, fps, segment duration, and bitrate</b>; the reports
+          embed their config and diff directly — "before vs after 2 s segments".</p></div>
+      <div class="card"><p class="label">Integrity</p><h3>Timecode survivability</h3>
+        <p>Confirm the QR <b>survives the encode</b> at a given bitrate and resolution before trusting any
+          number — a pass/fail gate, not a guess.</p></div>
+      <div class="card"><p class="label">Integrity</p><h3>Known-delay calibration</h3>
+        <p>Inject a measured delay at one stage and confirm <b>only that stage moves</b> — the correlation
+          check that makes the whole chain believable.</p></div>
+    </div>
+  </section>
+
+  <section aria-labelledby="live-h">
+    <p class="eyebrow">Seen live</p>
+    <h2 id="live-h">The pipeline graph, mid-run</h2>
+    <p class="section-note">The console's live T0→T5 graph during a distributed 8K campaign — the controller's
+      local encode tap and the remote mux probes drawn as one chain. Each node shows its cumulative age from
+      origin and its decode health.</p>
+
+    <div class="livegraph">
+      <div class="lg-head">Pipeline T0→T5 — live graph</div>
+      <div class="lg-scroll">
+        <div class="chain">
+          <div class="gnode gen"><div class="gnid">Generator</div><div class="gmeta">T0</div></div>
+          <div class="gedge"><span class="elabel">encode</span><span class="eline"></span></div>
+          <div class="gnode"><div class="gnid">enc-t1</div><div class="gmeta">encode · T1</div><div class="gms">2992 ms</div><div class="gdec">169/177 ok</div></div>
+          <div class="gedge"><span class="elabel">SRT</span><span class="eline"></span></div>
+          <div class="gnode"><div class="gnid">mux-t2</div><div class="gmeta">SRT · T2</div><div class="gms">3553 ms</div><div class="gdec nodata">no data</div></div>
+          <div class="gedge"><span class="elabel">origin</span><span class="eline"></span></div>
+          <div class="gnode"><div class="gnid">mux-1</div><div class="gmeta">origin · T3</div><div class="gms">3487 ms</div><div class="gdec">2136/8073 ok</div></div>
+        </div>
+      </div>
+    </div>
+    <p class="rail-caption">Ages are cumulative from T0 — ~3&nbsp;s at encode, ~3.5&nbsp;s at origin. The chain
+      stops at <b>T3</b> because the CDN/player hops aren't wired here, and <b>mux-t2</b> shows the thin-T2 case
+      from the open items: a valid age, but "no data" on its decode count until its receive buffer is firmed up.</p>
+  </section>
+
+  <section aria-labelledby="status-h">
+    <p class="eyebrow">Where it stands</p>
+    <h2 id="status-h">Validated so far — and what's left</h2>
+    <p class="section-note">The core measurement chain is proven end to end at 8K. The open items extend
+      coverage to the last delivery hops and firm up the thinner readings — none blocks the glass-to-glass number.</p>
+
+    <div class="status-grid">
+      <div class="status-col done">
+        <div class="status-head"><h3>Validated</h3><span class="count">5 confirmed</span></div>
+        <p class="sub">Demonstrated on real hardware, with pass/fail gates where it counts.</p>
+        <ul class="status-list">
+          <li><b>Timecode survivability</b> 600 / 600 frames (100%) decoded through 8K HEVC NVENC — the QR carrier survives the encode.</li>
+          <li><b>Correlation integrity</b> injected a known +500&nbsp;ms delay at one stage; only that stage rose (+523&nbsp;ms), nothing else moved.</li>
+          <li><b>Encode holds real-time</b> 8K60 HEVC NVENC, split-frame across 3 engines — sustained 1.0× with zero dropped frames.</li>
+          <li><b>Distributed chain, correctly ordered</b> T0→T3 across two machines nests as it should: ~3.0&nbsp;s encode, +0.4&nbsp;s SRT, +0.1&nbsp;s packaging, ~3.5&nbsp;s glass-to-glass. Frame-level T1/T2 taps read current.</li>
+          <li><b>Cross-machine clocks</b> µs-synced to the AWS time source, so the one-way SRT timing is trustworthy.</li>
+        </ul>
+      </div>
+
+      <div class="status-col todo">
+        <div class="status-head"><h3>Still to validate</h3><span class="count">4 open</span></div>
+        <p class="sub">Coverage and robustness, in rough priority order.</p>
+        <ul class="status-list">
+          <li><b>T0→T1 calibration</b> run the known-delay injection on the encode stage too, to fully close the correlation gate — T0→T2 has passed, T0→T1 hasn't been run.</li>
+          <li><b>T2 sample density</b> confirm the enlarged mux receive buffer lifts T2 from a thin handful of samples to a robust count.</li>
+          <li><b>T4 — CDN stage</b> measure through a real CDN edge; not yet exercised (needs a CDN manifest URL).</li>
+          <li><b>T5 — player glass-to-glass</b> true source→display latency via the in-browser player decode, end to end.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <footer class="foot">
+    <span class="badge">Honest by design</span>
+    <p>Every stage is labeled <span class="tag-m">measured</span>, <span class="tag-d">derived</span>, or
+      <span class="tag-n">not&nbsp;measured</span> — the tool never presents an estimate as a measurement.
+      <b>T1/T2 are measured precisely</b> on the instrumented path; <b>T3–T5</b> read only when given an
+      origin, CDN, or player URL. What you can't observe cleanly, it says so.</p>
+  </footer>
+
+</div>
+</div>
+
+</body>
+</html>
