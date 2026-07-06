@@ -45,6 +45,7 @@
     margin:0 0 16px;text-wrap:balance;
   }
   .lede{font-size:clamp(1.02rem,1.6vw,1.14rem);color:#C6D1DA;max-width:64ch;margin:0;}
+  .lede b{color:var(--ink);font-weight:650;}
   h2{font-size:1.32rem;font-weight:680;letter-spacing:-.01em;margin:0 0 6px;text-wrap:balance;}
   .section-note{color:var(--muted);max-width:66ch;margin:0 0 26px;font-size:.96rem;}
   section{margin-top:clamp(48px,7vw,74px);}
@@ -170,9 +171,10 @@
   <header>
     <p class="eyebrow">Video-latency instrument</p>
     <h1>Prism</h1>
-    <p class="lede">It originates an instrumented video stream, encodes and transmits it, and measures the
-      true end-to-end latency at every observable stage of the delivery chain. Because it stamps time-zero
-      into each frame itself, it's the one component that can measure glass-to-glass without guessing.</p>
+    <p class="lede"><b>Prism is a precision instrument for measuring end-to-end video-delivery latency.</b>
+      It originates an instrumented video stream, encodes and transmits it, and reads the true glass-to-glass
+      latency at every observable stage of the delivery chain — and because it stamps time-zero into each
+      frame itself, it's the one component that can measure it without guessing.</p>
 
     <div class="readouts" role="group" aria-label="Current validated state">
       <div class="ro"><p class="k">Encode load</p><div class="v">8K60 HEVC · <b>1.0×</b> real-time</div></div>
@@ -307,7 +309,8 @@
     <p class="eyebrow">Where it stands</p>
     <h2 id="status-h">Validated so far — and what's left</h2>
     <p class="section-note">The core measurement chain is proven end to end at 8K. The open items extend
-      coverage to the last delivery hops and firm up the thinner readings — none blocks the glass-to-glass number.</p>
+      coverage — the last delivery hops, plus multi-encoder redundancy — and firm up the thinner readings;
+      none blocks the glass-to-glass number that already works.</p>
 
     <div class="status-grid">
       <div class="status-col done">
@@ -323,13 +326,14 @@
       </div>
 
       <div class="status-col todo">
-        <div class="status-head"><h3>Still to validate</h3><span class="count">4 open</span></div>
+        <div class="status-head"><h3>Still to validate</h3><span class="count">5 open</span></div>
         <p class="sub">Coverage and robustness, in rough priority order.</p>
         <ul class="status-list">
           <li><b>T0→T1 calibration</b> run the known-delay injection on the encode stage too, to fully close the correlation gate — T0→T2 has passed, T0→T1 hasn't been run.</li>
           <li><b>T2 sample density</b> confirm the enlarged mux receive buffer lifts T2 from a thin handful of samples to a robust count.</li>
           <li><b>T4 — CDN stage</b> measure through a real CDN edge; not yet exercised (needs a CDN manifest URL).</li>
           <li><b>T5 — player glass-to-glass</b> true source→display latency via the in-browser player decode, end to end.</li>
+          <li><b>Encoder redundancy &amp; sync</b> run a redundant (hot-standby) encoder alongside the primary, confirm the two stay frame- and timecode-aligned, and exercise the failover workflow end to end so a switch between them is seamless.</li>
         </ul>
       </div>
     </div>
