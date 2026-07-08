@@ -4,13 +4,13 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Prism — Overview</title>
-<meta name="description" content="Prism — a precision instrument for validating end-to-end 8K video workflows in the cloud. What it does, what it tests, the hardware, validation status, and roadmap.">
+<meta name="description" content="Prism — a precision instrument for validating end-to-end 8K video workflows in the cloud. What it does, what it tests, recent updates, validation status, and the roadmap.">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='88'>%E2%8F%B1%EF%B8%8F</text></svg>">
 <style>
   :root{
     --ground:#0F1519;      /* deep ink-slate, cool bias */
     --panel:#161E25;
-    --panel-2:#1B252D;
+    --panel2:#1B252D;
     --line:#26323B;
     --line-soft:#1F2A32;
     --ink:#E7EDF1;         /* cool off-white */
@@ -64,6 +64,16 @@
   .ro .v b{color:var(--amber);font-weight:600;}
   .ro .v .ok{color:var(--measured);}
 
+  /* ---- updates list ---- */
+  .updates{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:13px;}
+  .updates li{display:flex;gap:16px;align-items:baseline;}
+  .updates .d{
+    font-family:var(--font-mono);font-size:.7rem;letter-spacing:.06em;color:var(--amber);
+    white-space:nowrap;min-width:74px;text-transform:uppercase;
+  }
+  .updates .t{color:var(--muted);font-size:.93rem;line-height:1.55;max-width:78ch;}
+  .updates .t b{color:var(--ink);font-weight:620;}
+
   /* ---- signal path strip ---- */
   .rail-scroll{overflow-x:auto;padding-bottom:6px;margin:0 -4px;}
   .rail{display:flex;align-items:stretch;gap:0;min-width:760px;padding:0 4px;}
@@ -93,7 +103,7 @@
   /* ---- capability / test / rig grids ---- */
   .grid{display:grid;gap:14px;grid-template-columns:repeat(auto-fit,minmax(258px,1fr));}
   .card{
-    border:1px solid var(--line);background:linear-gradient(180deg,var(--panel-2),var(--panel));
+    border:1px solid var(--line);background:linear-gradient(180deg,var(--panel2),var(--panel));
     border-radius:12px;padding:19px 20px 20px;
   }
   .card .label{
@@ -200,23 +210,49 @@
     <h1>Prism</h1>
     <p class="lede"><b>Prism is a precision instrument for validating end-to-end 8K video workflows in the
       cloud.</b> It originates an instrumented stream, encodes and transmits it, and measures the true
-      glass-to-glass latency at every stage of the delivery chain — proving a full-resolution 8K pipeline on
-      cloud GPUs holds real-time and stays inside its latency budget. Because it stamps time-zero into each
-      frame, it's the one component that can measure that without guessing.</p>
+      glass-to-glass latency at every stage of the delivery chain — proving that a full-resolution 8K
+      pipeline on cloud GPUs holds real time and stays inside its latency budget. Because Prism stamps
+      time-zero into every frame, it can measure all of this without guessing.</p>
 
     <div class="readouts" role="group" aria-label="Current validated state">
       <div class="ro"><p class="k">Encode load</p><div class="v">8K60 HEVC · <b>1.0×</b> real-time</div></div>
       <div class="ro"><p class="k">Glass-to-glass</p><div class="v"><b>≈3.5&nbsp;s</b> <span class="ok">measured</span></div></div>
-      <div class="ro"><p class="k">Pipeline</p><div class="v">encode→SRT→mux, ordered</div></div>
+      <div class="ro"><p class="k">Pipeline</p><div class="v">T0→T5 <span class="ok">all measured</span></div></div>
       <div class="ro"><p class="k">Clock sync</p><div class="v"><span class="ok">µs</span> across machines</div></div>
     </div>
   </header>
+
+  <section aria-labelledby="upd-h">
+    <p class="eyebrow">Recent updates</p>
+    <h2 id="upd-h">What's new</h2>
+    <ul class="updates">
+      <li><span class="d">Jul 7 '26</span><div class="t"><b>The full chain is measured.</b> With the new
+        player reporting from the viewing end, every stage from origin to display (T0→T5) now carries a
+        live measurement — the first complete end-to-end reading.</div></li>
+      <li><span class="d">Jul 7 '26</span><div class="t"><b>Prism Console.</b> The control plane moved to a
+        dedicated always-on instance: TLS with per-user logins, fleet start/stop from the browser, and
+        campaigns relayed to the GPU encoder — operators never need shell access.</div></li>
+      <li><span class="d">Jul 7 '26</span><div class="t"><b>Prism Player.</b> A hosted playback probe that
+        plays any endpoint (HLS, LL-HLS, or DASH), decodes the QR for true glass-to-glass, exposes buffer /
+        ABR / segment telemetry, and feeds T5 into the pipeline graph.</div></li>
+      <li><span class="d">Jul 7 '26</span><div class="t"><b>Viewing ladder.</b> Delivery now carries two
+        variants: the bit-exact 8K HEVC measured product plus a universal 1080p H.264 preview transcoded
+        once on the mux GPU — any laptop can watch, and viewers can lock either variant in the player.</div></li>
+      <li><span class="d">Jul 7 '26</span><div class="t"><b>Managed origin validated.</b> The pipeline
+        ingests into AWS MediaPackage v2 without MediaLive (a SigV4 signing proxy keeps Prism's encoder in
+        the path), the QR survives re-packaging, and one chunk set serves HLS, LL-HLS with real partial
+        segments (~4.7&nbsp;s fresh), and DASH.</div></li>
+      <li><span class="d">Jul 6 '26</span><div class="t"><b>Correlation gate closed.</b> Known-delay
+        injection now passes in both directions (encode +471&nbsp;ms, SRT +523&nbsp;ms, each rising alone) —
+        the check that makes every latency number trustworthy.</div></li>
+    </ul>
+  </section>
 
   <section aria-labelledby="model-h">
     <p class="eyebrow">The measurement model</p>
     <h2 id="model-h">One timecode, followed across six stages</h2>
     <p class="section-note">Every frame carries a QR timecode stamped with its emission epoch. Latency at any
-      point is that frame's own age when it's seen there — no cross-clock arithmetic, no assumptions.</p>
+      point is simply that frame's own age when it is seen there — no cross-clock arithmetic, no assumptions.</p>
 
     <div class="rail-scroll">
       <div class="rail">
@@ -236,73 +272,73 @@
           <span class="tid">T3</span><div class="sname">Origin segment</div>
           <p class="sdesc">Freshest frame the origin serves.</p><span class="method freshness">Freshness</span>
         </div></div>
-        <div class="stage"><div class="node">
-          <span class="tid">T4</span><div class="sname">CDN edge</div>
-          <p class="sdesc">Same, read at a CDN URL.</p><span class="method freshness">Freshness</span>
+        <div class="stage measured"><div class="node">
+          <span class="tid">T4</span><div class="sname">Delivery tier</div>
+          <p class="sdesc">MediaPackage egress today; CDN edges per region next.</p><span class="method freshness">Freshness</span>
         </div></div>
-        <div class="stage"><div class="node">
+        <div class="stage measured"><div class="node">
           <span class="tid">T5</span><div class="sname">Player</div>
-          <p class="sdesc">Frame shown to a viewer.</p><span class="method freshness">If URL given</span>
+          <p class="sdesc">Prism Player decodes the QR at playback.</p><span class="method freshness">Freshness</span>
         </div></div>
       </div>
     </div>
     <p class="rail-caption"><b>Precise</b> stages catch the exact frame (frame-level age); <b>freshness</b>
-      stages read the newest served frame. A warm-up window excludes pipeline spin-up and every run resets to
-      zero, so the numbers reflect steady state — not the first noisy seconds.</p>
+      stages read the newest served frame. A warm-up window keeps pipeline spin-up out of the numbers, and
+      every run resets to zero, so results reflect steady state — not the first noisy seconds.</p>
   </section>
 
   <section aria-labelledby="does-h">
     <p class="eyebrow">Capabilities</p>
     <h2 id="does-h">What it does</h2>
-    <p class="section-note">A complete test-rig source in one tool — origination through delivery, with the
-      instrumentation a normal encoder can't provide.</p>
+    <p class="section-note">A complete test rig in one toolset — origination through playback, with the
+      instrumentation an ordinary encoder can't provide.</p>
 
     <div class="grid">
       <div class="card"><p class="label">Originate</p><h3>Generate the source</h3>
         <p>A test pattern, a pre-rendered file, or the <b>instrumented QR-timecode</b> source that carries the
           measurement. Any resolution up to <b>8K</b>.</p></div>
       <div class="card"><p class="label">Encode</p><h3>Hardware or software</h3>
-        <p>NVENC <b>H.264 / HEVC / AV1</b> or libx264/libx265; presets, rate control, and <b>split-frame
-          encoding</b> across multiple NVENC engines for 8K. Never silently falls back to CPU.</p></div>
-      <div class="card"><p class="label">Deliver</p><h3>CMAF and/or SRT</h3>
-        <p>CMAF (<b>HLS + DASH</b>) to disk, an <b>SRT contribution</b>, or both from a single encode via the
-          tee muxer — one decode, two sinks.</p></div>
+        <p>NVENC <b>H.264 / HEVC / AV1</b> or libx264/libx265, with presets, rate control, and <b>split-frame
+          encoding</b> across multiple NVENC engines for 8K. Never falls back to CPU silently.</p></div>
+      <div class="card"><p class="label">Deliver</p><h3>CMAF, SRT, managed origin</h3>
+        <p>CMAF (<b>HLS + DASH</b>) to disk, an <b>SRT contribution</b>, and ingest into <b>MediaPackage v2</b>
+          — which serves HLS, LL-HLS, and DASH from one chunk set, in a two-variant ladder (8K + 1080p preview).</p></div>
       <div class="card"><p class="label">Measure</p><h3>Per-frame latency</h3>
         <p>QR-timecode latency across <b>T0→T5</b> — precise where the exact frame can be caught, freshness
           where only the newest segment is visible.</p></div>
       <div class="card"><p class="label">Span machines</p><h3>Distributed probes</h3>
-        <p>Passive probes on separate boxes measure a <b>real cross-network SRT contribution</b> — not a
+        <p>Passive probes on separate instances measure a <b>real cross-network SRT contribution</b> — not a
           loopback — with clock-synced one-way timing.</p></div>
-      <div class="card"><p class="label">Observe &amp; report</p><h3>Live view + records</h3>
-        <p>Live telemetry, a T0→T5 pipeline graph, campaign results, source preview, and an in-browser player.
-          Every run writes a diffable <b>JSON + CSV</b>.</p></div>
+      <div class="card"><p class="label">Operate &amp; observe</p><h3>Console + Player</h3>
+        <p>An always-on <b>console</b> (auth, fleet control, remote campaigns, live T0→T5 graph) and a hosted
+          <b>player</b> with deep playback telemetry. Every run writes a diffable <b>JSON + CSV</b> report.</p></div>
     </div>
   </section>
 
   <section aria-labelledby="test-h">
     <p class="eyebrow">What you put it to</p>
     <h2 id="test-h">What it lets you test</h2>
-    <p class="section-note">The questions a delivery pipeline actually raises — answered on the real hardware
-      and network, with numbers you can trust and compare.</p>
+    <p class="section-note">The questions a delivery pipeline actually raises — answered on real hardware
+      and a real network, with numbers you can trust and compare.</p>
 
     <div class="grid">
       <div class="card"><p class="label">Throughput</p><h3>Real-time headroom</h3>
-        <p>Can this GPU hold <b>1× (or N×)</b> at a given resolution, fps, codec, and preset? Live speed, fps,
-          and drop telemetry answer it on the actual instance — e.g. <b>8K60 HEVC at 1.0×</b>.</p></div>
+        <p>Can this GPU hold <b>1× (or N×)</b> at a given resolution, frame rate, codec, and preset? Live
+          speed, fps, and drop telemetry answer it on the actual instance — e.g. <b>8K60 HEVC at 1.0×</b>.</p></div>
       <div class="card"><p class="label">End to end</p><h3>Glass-to-glass latency</h3>
-        <p>The true source→viewer delay, with a <b>per-stage breakdown</b> — encode vs SRT vs packaging vs CDN
-          vs player — so you see <em>which</em> latency dominates.</p></div>
+        <p>The true source→viewer delay, with a <b>per-stage breakdown</b> — encode vs. SRT vs. packaging vs.
+          delivery vs. player — so you can see <em>which</em> latency dominates.</p></div>
       <div class="card"><p class="label">Across the wire</p><h3>Cross-machine latency</h3>
         <p>Measure a genuine SRT contribution <b>between instances</b>, over the real network, with the
-          one-way timing that only synced clocks make honest.</p></div>
+          one-way timing that only synchronized clocks make honest.</p></div>
       <div class="card"><p class="label">Trade-offs</p><h3>Codec &amp; config A/B</h3>
-        <p>Sweep any mix of <b>codec, preset, resolution, fps, segment duration, and bitrate</b>; every report
-          embeds its config and diffs directly against another.</p></div>
+        <p>Sweep any mix of <b>codec, preset, resolution, frame rate, segment duration, and bitrate</b>; every
+          report embeds its configuration and diffs directly against another.</p></div>
       <div class="card"><p class="label">Integrity</p><h3>Timecode survivability</h3>
         <p>Confirm the QR <b>survives the encode</b> at a given bitrate and resolution before trusting any
           number — a pass/fail gate, not a guess.</p></div>
       <div class="card"><p class="label">Integrity</p><h3>Known-delay calibration</h3>
-        <p>Inject a measured delay at one stage and confirm <b>only that stage moves</b> — the correlation
+        <p>Inject a measured delay at one stage and confirm that <b>only that stage moves</b> — the correlation
           check that makes the whole chain believable.</p></div>
     </div>
   </section>
@@ -310,9 +346,9 @@
   <section aria-labelledby="live-h">
     <p class="eyebrow">Seen live</p>
     <h2 id="live-h">The pipeline graph, mid-run</h2>
-    <p class="section-note">The console's live T0→T5 graph during a distributed 8K campaign — the controller's
-      local encode tap and the remote mux probes drawn as one chain. Each node shows its cumulative age from
-      origin and its decode health.</p>
+    <p class="section-note">The console's live T0→T5 graph during a distributed 8K campaign — the encoder's
+      local tap and the remote mux probes drawn as one chain, each node showing its cumulative age from
+      origin and its decode health. (This capture predates the T4/T5 nodes, which now join the same chain.)</p>
 
     <div class="livegraph">
       <div class="lg-head">Pipeline T0→T5 — live graph</div>
@@ -322,71 +358,79 @@
           <div class="gedge"><span class="elabel">encode</span><span class="eline"></span></div>
           <div class="gnode"><div class="gnid">enc-t1</div><div class="gmeta">encode · T1</div><div class="gms">2992 ms</div><div class="gdec">169/177 ok</div></div>
           <div class="gedge"><span class="elabel">SRT</span><span class="eline"></span></div>
-          <div class="gnode"><div class="gnid">mux-t2</div><div class="gmeta">SRT · T2</div><div class="gms">3553 ms</div><div class="gdec nodata">no data</div></div>
+          <div class="gnode"><div class="gnid">mux-t2</div><div class="gmeta">SRT · T2</div><div class="gms">3553 ms</div><div class="gdec nodata">sparse</div></div>
           <div class="gedge"><span class="elabel">origin</span><span class="eline"></span></div>
           <div class="gnode"><div class="gnid">mux-1</div><div class="gmeta">origin · T3</div><div class="gms">3487 ms</div><div class="gdec">2136/8073 ok</div></div>
         </div>
       </div>
     </div>
-    <p class="rail-caption">Ages are cumulative from T0 — ~3&nbsp;s at encode, ~3.5&nbsp;s at origin. The chain
-      stops at <b>T3</b> (the CDN and player hops aren't wired here), and <b>mux-t2</b>'s "no data" is the
-      sample-sparse T2 case: a valid age, just a thin decode count — inherent to the frame-level tap at 8K,
-      and fine for a latency sample.</p>
+    <p class="rail-caption">Ages are cumulative from T0 — roughly 3&nbsp;s at encode and 3.5&nbsp;s at the
+      origin. <b>mux-t2</b> illustrates an accepted trade-off: the frame-level SRT tap is sample-sparse at 8K
+      (keyframes over a lossy local re-emit), but its readings are consistent — a stable latency sample,
+      which is all it needs to be.</p>
   </section>
 
   <section aria-labelledby="rig-h">
     <p class="eyebrow">The rig</p>
     <h2 id="rig-h">Hardware &amp; cloud</h2>
-    <p class="section-note">The validated results run on AWS EC2 — two GPU instances in one VPC — but nothing
+    <p class="section-note">The validated results run on AWS EC2 — a small fleet in one VPC — but nothing
       here is AWS-specific.</p>
 
     <div class="grid">
-      <div class="card"><p class="label">Encoder + controller</p><h3>NVIDIA L40S · g6e</h3>
-        <p>Three NVENC engines drive the <b>split-frame 8K60</b> encode; the box also hosts the console and
-          the local encode tap.</p></div>
+      <div class="card"><p class="label">Encoder</p><h3>NVIDIA L40S · g6e</h3>
+        <p>Three NVENC engines drive the <b>split-frame 8K60</b> encode; runs the headless campaign engine
+          the console relays to.</p></div>
       <div class="card"><p class="label">Mux + packager</p><h3>NVIDIA L4 · g6</h3>
-        <p>Receives the SRT contribution and packages <b>CMAF / HLS</b>; its NVDEC decodes 8K for the probes —
-          without ever touching the encoder's pace.</p></div>
-      <div class="card"><p class="label">AWS glue</p><h3>VPC + Time Sync</h3>
-        <p>Both instances share one VPC (private-IP, security-group-locked), and the <b>Amazon Time Sync
-          Service</b> keeps chrony µs-accurate — what makes the cross-machine timing honest.</p></div>
+        <p>Receives the SRT contribution, packages <b>CMAF / HLS</b>, pushes the two-variant ladder into
+          MediaPackage, and transcodes the <b>1080p preview</b> — without ever touching the encoder's pace.</p></div>
+      <div class="card"><p class="label">Control plane</p><h3>Console · t3.small</h3>
+        <p>Always on: TLS + per-user auth, the pipeline graph, <b>fleet start/stop</b>, campaign relay, and
+          the hosted player. Survives fleet power-cycling.</p></div>
+      <div class="card"><p class="label">AWS glue</p><h3>VPC · Time Sync · MediaPackage</h3>
+        <p>Private-IP fleet in one VPC; the <b>Amazon Time Sync Service</b> keeps chrony µs-accurate (what
+          makes cross-machine timing honest); <b>MediaPackage v2</b> is the managed origin tier.</p></div>
     </div>
 
     <div class="callout">
       <p class="k">Not AWS-locked</p>
-      <p>Prism is just <b>Python + FFmpeg + NVENC/NVDEC</b>, so it runs on any Linux GPU host. The AWS pieces
-        map straight across: EC2 GPU instances → GCP A3/G2 or Azure NV/NC-series; the Time Sync Service → any
-        chrony/PTP/NTP source; security groups → the platform's firewall controls. Same rig, different cloud.</p>
+      <p>Prism is <b>Python + FFmpeg + NVENC/NVDEC</b>, so it runs on any Linux GPU host. The AWS pieces map
+        straight across: EC2 GPU instances → GCP A3/G2 or Azure NV/NC series; the Time Sync Service → any
+        chrony/PTP/NTP source; security groups → the platform's firewall controls; MediaPackage → any
+        LL-capable origin. Same rig, different cloud.</p>
     </div>
   </section>
 
   <section aria-labelledby="status-h">
     <p class="eyebrow">Where it stands</p>
     <h2 id="status-h">Validated so far — and what's left</h2>
-    <p class="section-note">The core chain is proven end to end at 8K. What's open extends coverage — the last
-      delivery hops and multi-encoder redundancy — and none of it blocks the glass-to-glass number that
-      already works.</p>
+    <p class="section-note">The measurement chain is proven end to end at 8K, through a managed origin, to a
+      real player. What remains extends geographic coverage and resilience — none of it blocks the numbers
+      that already work.</p>
 
     <div class="status-grid">
       <div class="status-col done">
-        <div class="status-head"><h3>Validated</h3><span class="count">5 confirmed</span></div>
+        <div class="status-head"><h3>Validated</h3><span class="count">7 confirmed</span></div>
         <p class="sub">Demonstrated on real hardware, with pass/fail gates where it counts.</p>
         <ul class="status-list">
           <li><b>Timecode survivability</b> 600 / 600 frames (100%) decoded through 8K HEVC NVENC — the QR carrier survives the encode.</li>
-          <li><b>Correlation integrity</b> a known +500&nbsp;ms delay injected at the encode and SRT stages in turn rose alone (T0→T1 +471&nbsp;ms, T0→T2 +523&nbsp;ms), with no other stage affected. Injection gate fully closed.</li>
-          <li><b>Encode holds real-time</b> 8K60 HEVC NVENC, split-frame across 3 engines — sustained 1.0× with zero dropped frames.</li>
-          <li><b>Distributed chain, correctly ordered</b> T0→T3 across two machines nests as it should — ~3.0&nbsp;s encode, +0.4&nbsp;s SRT, +0.1&nbsp;s packaging, ~3.5&nbsp;s glass-to-glass. T2 is sample-sparse at 8K but consistent — a stable latency sample.</li>
-          <li><b>Cross-machine clocks</b> µs-synced to the AWS time source, so the one-way SRT timing is trustworthy.</li>
+          <li><b>Correlation integrity</b> a known +500&nbsp;ms delay injected at the encode and SRT stages rose alone (+471&nbsp;ms and +523&nbsp;ms respectively), with no other stage affected. The injection gate is fully closed.</li>
+          <li><b>Encode holds real time</b> 8K60 HEVC NVENC, split-frame across three engines — sustained 1.0× with zero dropped frames.</li>
+          <li><b>Distributed chain, correctly ordered</b> T0→T3 across two machines nests as it should — ~3.0&nbsp;s encode, +0.4&nbsp;s SRT, +0.1&nbsp;s packaging, ~3.5&nbsp;s glass-to-glass.</li>
+          <li><b>Managed origin</b> ingest into MediaPackage v2 without MediaLive; the QR survives re-packaging (36/36 decoded by the unmodified probe); LL-HLS with real partial segments and DASH emitted from one chunk set.</li>
+          <li><b>Player closes the chain</b> the Prism Player decodes the QR at playback and reports T5 — every stage T0→T5 measured in one live run, including the delivery tier (T4) at the MediaPackage egress.</li>
+          <li><b>Cross-machine clocks</b> µs-synced to the AWS time source, so one-way SRT timing is trustworthy.</li>
         </ul>
       </div>
 
       <div class="status-col todo">
-        <div class="status-head"><h3>Still to validate</h3><span class="count">3 open</span></div>
-        <p class="sub">Coverage and robustness — none blocking the core number.</p>
+        <div class="status-head"><h3>Still to validate</h3><span class="count">2 open</span></div>
+        <p class="sub">Coverage and resilience — neither blocks the core numbers.</p>
         <ul class="status-list">
-          <li><b>T4 — CDN stage</b> measure through a real CDN edge; not yet exercised (needs a CDN manifest URL).</li>
-          <li><b>T5 — player glass-to-glass</b> true source→display latency via the in-browser player decode, end to end.</li>
-          <li><b>Encoder redundancy &amp; sync</b> confirm a hot-standby encoder stays frame- and timecode-aligned, and exercise failover end to end.</li>
+          <li><b>Per-region CDN (T4 at the edge)</b> today's T4 reads the MediaPackage egress; the next step
+            puts CloudFront in front and measures freshness from probes in multiple regions — real
+            geographic propagation.</li>
+          <li><b>Encoder redundancy &amp; sync</b> run a hot-standby encoder frame- and timecode-aligned with
+            the primary, and exercise the failover workflow end to end.</li>
         </ul>
       </div>
     </div>
@@ -395,17 +439,17 @@
   <section aria-labelledby="road-h">
     <p class="eyebrow">What's next</p>
     <h2 id="road-h">Roadmap</h2>
-    <p class="section-note">Where Prism is headed, grouped by horizon — roughly the order it'll land.</p>
+    <p class="section-note">Where Prism is headed, grouped by horizon — roughly the order it will land.</p>
 
     <div class="roadmap">
       <div class="lane next">
-        <div class="lane-head"><h3>Finishing the chain</h3><span class="lane-tag">Up next</span></div>
-        <p class="sub">Close the source→viewer path, and make the console shareable.</p>
+        <div class="lane-head"><h3>Finishing the delivery story</h3><span class="lane-tag">Up next</span></div>
+        <p class="sub">Real-world reach, resilience, and safe sharing.</p>
         <ul class="feat">
-          <li><b>CDN-edge stage (T4)</b> — extend the chain through a real CDN edge, so the graph spans origin→CDN.</li>
-          <li><b>Player glass-to-glass (T5)</b> — true source→display latency via the in-browser player's QR decode.</li>
+          <li><b>CloudFront + regional probes</b> — per-region T4 from edges around the world, replacing the single delivery-tier reading.</li>
           <li><b>Encoder redundancy &amp; sync</b> — a hot-standby encoder kept frame- and timecode-aligned, with tested failover.</li>
-          <li><b>Multi-user access</b> — built-in auth and role-scoped controls, so the console can be shared safely.</li>
+          <li><b>Multi-user roles</b> — per-user logins shipped; next is viewer-vs-operator scoping so guests can watch without controlling the fleet.</li>
+          <li><b>Player race mode</b> — LL-HLS, HLS, and DASH playing the same stream side by side, each with its own latency readout.</li>
         </ul>
       </div>
 
@@ -413,19 +457,21 @@
         <div class="lane-head"><h3>Broadening the instrument</h3><span class="lane-tag">Planned</span></div>
         <p class="sub">More formats and modes for the pipelines you actually run.</p>
         <ul class="feat">
-          <li><b>DASH-MPD live measurement</b> — walk DASH manifests directly; endpoint polling is HLS-only today.</li>
-          <li><b>Audio + A/V-sync</b> — carry an audio track and measure audio latency and lip-sync alongside video.</li>
+          <li><b>Chunk-aware probing</b> — sub-segment latency visibility so low-latency delivery can be measured at part granularity, not just per segment.</li>
+          <li><b>DASH-MPD live measurement</b> — probe DASH manifests directly; endpoint polling is HLS-only today.</li>
+          <li><b>Audio + A/V sync</b> — carry an audio track and measure audio latency and lip-sync alongside video.</li>
           <li><b>VVC (H.266) support</b> — bring the next-generation codec into the encoder lineup.</li>
-          <li><b>Encoder ladder support</b> — encode a full ABR ladder (multiple resolution/bitrate renditions) from one source, to measure latency across a real adaptive-bitrate delivery, not just a single rendition.</li>
+          <li><b>Full ABR ladder</b> — grow today's two-variant ladder (8K + 1080p preview) into a proper multi-tier ladder (e.g. a 4K HEVC middle rung).</li>
           <li><b>Continuous monitor mode</b> — run as a persistent latency logger with trends, beyond discrete campaigns.</li>
         </ul>
       </div>
 
       <div class="lane explore">
         <div class="lane-head"><h3>Reach &amp; production</h3><span class="lane-tag">Exploratory</span></div>
-        <p class="sub">Wider delivery and multi-site scale.</p>
+        <p class="sub">The larger platform Prism is growing toward.</p>
         <ul class="feat">
-          <li><b>Managed-origin delivery</b> — push to S3 / MediaPackage / RTMP(S) targets, not just local CMAF/SRT.</li>
+          <li><b>On-prem encoder + hardware PTP clock</b> — an on-site encoder disciplined by a PTP grandmaster, with hybrid on-prem↔cloud timing.</li>
+          <li><b>VOD platform</b> — S3 + CloudFront playback of recorded campaigns, fed from the managed origin.</li>
           <li><b>Multi-PoP probe fleet</b> — many correlated probes across regions in one view.</li>
         </ul>
       </div>
@@ -436,8 +482,9 @@
     <span class="badge">Honest by design</span>
     <p>Every stage is labeled <span class="tag-m">measured</span>, <span class="tag-d">derived</span>, or
       <span class="tag-n">not&nbsp;measured</span> — Prism never presents an estimate as a measurement.
-      <b>T1/T2 are measured per-frame</b> on the instrumented path (T2 sample-sparse at 8K); <b>T3–T5</b>
-      read only when given an origin, CDN, or player URL. What it can't observe cleanly, it says so.</p>
+      T1/T2 are measured per frame on the instrumented path (T2 is sample-sparse at 8K by design);
+      T3–T5 are freshness readings taken wherever a real endpoint serves. What it can't observe cleanly,
+      it says so.</p>
   </footer>
 
 </div>
