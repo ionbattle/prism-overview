@@ -56,7 +56,7 @@
   .readouts{
     margin-top:30px;display:grid;gap:1px;background:var(--line-soft);
     border:1px solid var(--line);border-radius:12px;overflow:hidden;
-    grid-template-columns:repeat(auto-fit,minmax(190px,1fr));
+    grid-template-columns:repeat(auto-fit,minmax(300px,1fr));/* 300px floor => 3/2/1 columns only: 6 readouts always tile evenly (190px allowed 5-across, orphaning the 6th over a hairline hole) */
   }
   .ro{background:var(--panel);padding:16px 18px;}
   .ro .k{font-family:var(--font-mono);font-size:.68rem;letter-spacing:.13em;text-transform:uppercase;color:var(--faint);margin:0 0 8px;}
