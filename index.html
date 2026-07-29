@@ -211,16 +211,16 @@
     <p class="lede"><b>Prism is a precision instrument for validating end-to-end 8K video workflows in the
       cloud.</b> It originates an instrumented stream, encodes and transmits it, and measures the true
       glass-to-glass latency at every stage of the delivery chain — proving that a full-resolution 8K
-      pipeline on cloud GPUs holds real time, stays inside its latency budget, and holds its picture
-      quality. Because Prism stamps time-zero into every frame, it can measure all of this without
-      guessing.</p>
+      pipeline on cloud GPUs holds real time and stays inside its latency budget. Because Prism stamps
+      time-zero into every frame, it can measure all of this without guessing.</p>
 
     <div class="readouts" role="group" aria-label="Current validated state">
       <div class="ro"><p class="k">Encode load</p><div class="v">8K60 HEVC · <b>1.0×</b> real-time</div></div>
-      <div class="ro"><p class="k">Glass-to-glass</p><div class="v"><b>≈2&nbsp;s</b> low-latency <span class="ok">measured</span></div></div>
+      <div class="ro"><p class="k">Glass-to-glass</p><div class="v"><b>≈4&nbsp;s</b> via CDN <span class="ok">measured</span></div></div>
       <div class="ro"><p class="k">Pipeline</p><div class="v">T0→T6 <span class="ok">all measured</span></div></div>
-      <div class="ro"><p class="k">Encode quality</p><div class="v">VMAF <b>tiled-8K</b> <span class="ok">measured</span></div></div>
       <div class="ro"><p class="k">CDN edges</p><div class="v"><b>3 regions</b> <span class="ok">measured</span></div></div>
+      <div class="ro"><p class="k">Audio</p><div class="v"><b>16ch</b> <span class="ok">fleet-proven</span> · 32ch local</div></div>
+      <div class="ro"><p class="k">Quality</p><div class="v"><b>VMAF&nbsp;v1</b> + CAMBI <span class="ok">every run</span></div></div>
     </div>
   </header>
 
@@ -228,36 +228,27 @@
     <p class="eyebrow">Recent updates</p>
     <h2 id="upd-h">What's new</h2>
     <ul class="updates">
-      <li><span class="d">Jul 14 '26</span><div class="t"><b>Four-rung ABR ladder, delivered.</b> Both
-        delivery paths now carry 8K HEVC + a 4K HEVC middle rung + 1080p and 720p H.264 universal-fallback
-        rungs, each advertising its own fully-qualified RFC 6381 codec string in HLS <em>and</em> DASH —
-        browsers on machines without 8K HEVC decode step down cleanly instead of failing.</div></li>
-      <li><span class="d">Jul 14 '26</span><div class="t"><b>Delivery headroom joins the report.</b> Every
-        probe now times its own media fetches, so each vantage reports cold-connection throughput (mean and
-        slowest) next to its latency — with an automatic warning when headroom thins. This catches the class
-        of delivery failure that latency medians can't see: the segments that arrive look fine while the
-        connection is quietly starving.</div></li>
-      <li><span class="d">Jul 13 '26</span><div class="t"><b>A real-world stall, reproduced and
-        root-caused.</b> A viewer on a ~180&nbsp;ms path collapsed to ~3&nbsp;Mbps against an 85&nbsp;Mbps
-        stream. Prism's origin reproduced it under emulated loss: cubic congestion control dies at 1% loss
-        on a long path (~550&nbsp;B/s) while BBR carries <b>73&nbsp;Mbps</b> through identical conditions.
-        Origins now run BBR with deep buffers, 30&nbsp;s live windows, browser-trusted HTTPS on a proper
-        domain, and spec-complete codec strings.</div></li>
-      <li><span class="d">Jul 13 '26</span><div class="t"><b>The quality axis is live.</b> VMAF measured at
-        the one lossy boundary — the encoder — with QR frame-exact source↔output alignment. No official 8K
-        model exists anywhere, so Prism scores four native-4K quadrants (mean + worst) plus a centre window,
-        on the June-2026 v1 model generation with banding detection, against real 8K footage. A live VMAF
-        ticker runs during every campaign and lands in the player and the report. Reference: 8K60 HEVC at
-        80&nbsp;Mbps scores tiled <b>81.7</b> (worst quadrant 76.4).</div></li>
-      <li><span class="d">Jul 12 '26</span><div class="t"><b>Low latency, proven at the granularity it's
-        sold at.</b> Probes now follow LL-HLS partial segments instead of whole segments: freshness at the
-        packager egress fell from ≈3.7&nbsp;s to <b>1.40&nbsp;s</b>, with ≈1.5&nbsp;s at the CDN edge and
-        player vantages — closing the last open item on the sub-segment story.</div></li>
-      <li><span class="d">Jul 12 '26</span><div class="t"><b>Reports built to share.</b> Every campaign
-        archives a self-contained HTML report: verdict chips, the T0→T6 waterfall with per-region fan-out,
-        latency-over-time, GPU/NVENC telemetry, and the quality panel. First headroom reading while
-        building it: the standard 8K60 encode uses under a third of the L40S's NVENC — roughly <b>3×
-        density headroom</b> on one card.</div></li>
+      <li><span class="d">Jul 28 '26</span><div class="t"><b>Transmission mode.</b> Beyond bounded test
+        campaigns: unbounded runs with <b>rolling window reports</b> (configurable cadence), an SRT
+        contribution leg that reconnects instead of dying silently, and honest <b>drop accounting</b> —
+        outages are counted in the record, not smoothed over. Merged and locally proven, incl. a mid-run
+        listener kill producing correct drop windows; first real-network run is next fleet session.</div></li>
+      <li><span class="d">Jul 28 '26</span><div class="t"><b>The console grew up.</b> One monolithic page
+        became a <b>seven-view operator console</b> — Home, Test lab (a five-step builder generated from
+        declarative field tables with a self-testing parity check), Live ops (SLO strip, egress-surface
+        health, event log, rolling quality), Audio, a typed <b>Reports</b> system (campaigns, comparisons,
+        channel-check records, egress captures — one renderer per kind), Fleet, and the Confidence monitor.
+        Built agent-first: an executable GUI spec gates every merge.</div></li>
+      <li><span class="d">Jul 23 '26</span><div class="t"><b>Audio is latency-invisible — proven.</b>
+        Back-to-back fleet runs, video-only vs. 8K60 + 16 channels of AAC: every stage moved ≤~3%
+        (T1&nbsp;+39&nbsp;ms … T5&nbsp;+143&nbsp;ms). Two 7.1 tracks flowed through the whole chain — SRT
+        contribution, packager, all four egress surfaces — with zero mux restarts.</div></li>
+      <li><span class="d">Jul 20 '26</span><div class="t"><b>Multichannel audio, instrumented like the
+        video.</b> Up to <b>32 channels</b> (4×7.1 AAC tracks), each channel carrying a unique fingerprint
+        tone so channel identity is <b>verified, not assumed</b> — 32/32 FFT-confirmed through a real NVENC
+        encode. A live <b>channel-check board</b> solos any channel at the source mid-run (no restart) and
+        writes an auditable line-check record with auto-verdicts — the classic broadcast fax check, with
+        proof.</div></li>
       <li><span class="d">Jul 8 '26</span><div class="t"><b>Global delivery, measured per region.</b>
         CloudFront now fronts the managed origin (with cryptographically signed origin access), and probe
         boxes in Virginia and Frankfurt read the QR straight off their local edges: the home-region edge
@@ -285,6 +276,13 @@
       <li><span class="d">Jul 7 '26</span><div class="t"><b>Viewing ladder.</b> Delivery now carries two
         variants: the bit-exact 8K HEVC measured product plus a universal 1080p H.264 preview transcoded
         once on the mux GPU — any laptop can watch, and viewers can lock either variant in the player.</div></li>
+      <li><span class="d">Jul 7 '26</span><div class="t"><b>Managed origin validated.</b> The pipeline
+        ingests into AWS MediaPackage v2 without MediaLive (a SigV4 signing proxy keeps Prism's encoder in
+        the path), the QR survives re-packaging, and one chunk set serves HLS, LL-HLS with real partial
+        segments (~4.7&nbsp;s fresh), and DASH.</div></li>
+      <li><span class="d">Jul 6 '26</span><div class="t"><b>Correlation gate closed.</b> Known-delay
+        injection now passes in both directions (encode +471&nbsp;ms, SRT +523&nbsp;ms, each rising alone) —
+        the check that makes every latency number trustworthy.</div></li>
     </ul>
   </section>
 
@@ -327,9 +325,8 @@
       </div>
     </div>
     <p class="rail-caption"><b>Precise</b> stages catch the exact frame (frame-level age); <b>freshness</b>
-      stages read the newest served frame — down to <b>LL-HLS partial segments</b> where the endpoint
-      publishes them. A warm-up window keeps pipeline spin-up out of the numbers, and every run resets to
-      zero, so results reflect steady state — not the first noisy seconds.</p>
+      stages read the newest served frame. A warm-up window keeps pipeline spin-up out of the numbers, and
+      every run resets to zero, so results reflect steady state — not the first noisy seconds.</p>
   </section>
 
   <section aria-labelledby="does-h">
@@ -347,22 +344,21 @@
           encoding</b> across multiple NVENC engines for 8K. Never falls back to CPU silently.</p></div>
       <div class="card"><p class="label">Deliver</p><h3>CMAF, SRT, origin, CDN</h3>
         <p>CMAF (<b>HLS + DASH</b>) to disk, an <b>SRT contribution</b>, ingest into <b>MediaPackage v2</b>
-          (HLS, LL-HLS, and DASH from one chunk set), a <b>four-rung ladder</b> (8K + 4K HEVC, 1080p + 720p
-          H.264, per-rung codec strings), and <b>CloudFront</b> in front with signed origin access.</p></div>
+          (HLS, LL-HLS, and DASH from one chunk set, a <b>four-rung ladder</b> — bit-exact 8K HEVC, 4K HEVC,
+          1080p + 720p H.264 — plus up to <b>4×7.1 audio</b>), and <b>CloudFront</b> in front with signed
+          origin access.</p></div>
       <div class="card"><p class="label">Measure</p><h3>Per-frame latency</h3>
         <p>QR-timecode latency across <b>T0→T6</b> — precise where the exact frame can be caught, freshness
-          where only the newest segment is visible, <b>down to LL-HLS partial segments</b>.</p></div>
-      <div class="card"><p class="label">Score</p><h3>Encode quality (VMAF)</h3>
-        <p><b>VMAF at the encode boundary</b> with QR frame-exact alignment: tiled native-4K scoring for 8K
-          (no official 8K model exists), current-generation models with banding detection, a <b>live quality
-          ticker</b> during the run, and full stats in the report.</p></div>
+          where only the newest segment is visible.</p></div>
       <div class="card"><p class="label">Span continents</p><h3>Distributed probes</h3>
         <p>Passive probes on separate instances — including <b>CDN-edge boxes on the US East Coast and in
           Europe</b> — measure real cross-network hops with clock-synced one-way timing.</p></div>
-      <div class="card"><p class="label">Operate &amp; observe</p><h3>Console + Player + self-check</h3>
-        <p>An always-on <b>console</b> (auth, fleet control, remote campaigns, live T0→T6 graph), a hosted
-          <b>player</b> with deep telemetry, and a one-click <b>instrument health check</b>. Every run writes
-          a diffable <b>JSON + CSV</b> report.</p></div>
+      <div class="card"><p class="label">Operate &amp; observe</p><h3>Console + monitor + self-check</h3>
+        <p>An always-on <b>seven-view console</b> (fleet control, live ops with egress-surface health and
+          event log, five-step test builder, typed <b>Reports</b> with two-run diffing), the hosted
+          <b>Confidence monitor</b> with per-channel audio meters, and a one-click <b>instrument health
+          check</b>. Every run writes a diffable report; quality is scored per run with <b>VMAF&nbsp;v1 +
+          CAMBI</b> at the one lossy boundary.</p></div>
     </div>
   </section>
 
@@ -384,16 +380,7 @@
           one-way timing that only synchronized clocks make honest.</p></div>
       <div class="card"><p class="label">Trade-offs</p><h3>Codec &amp; config A/B</h3>
         <p>Sweep any mix of <b>codec, preset, resolution, frame rate, segment duration, and bitrate</b>; every
-          report embeds its configuration <b>and its quality scores</b>, and diffs directly against
-          another.</p></div>
-      <div class="card"><p class="label">Quality</p><h3>Does the encode hold up?</h3>
-        <p><b>VMAF where the quality is decided</b> — the encoder — since everything downstream is bit-exact
-          copy. Absolute scores on real footage, A/B-relative on synthetic patterns, and the report says
-          which it was.</p></div>
-      <div class="card"><p class="label">Resilience</p><h3>Will delivery survive real networks?</h3>
-        <p>Per-vantage <b>fetch-rate headroom</b> beside every latency number, and an origin tuning story
-          proven under emulated loss — the failure mode where <b>latency looks fine until playback
-          dies</b>.</p></div>
+          report embeds its configuration and diffs directly against another.</p></div>
       <div class="card"><p class="label">Integrity</p><h3>Timecode survivability</h3>
         <p>Confirm the QR <b>survives the encode</b> at a given bitrate and resolution before trusting any
           number — a pass/fail gate, not a guess.</p></div>
@@ -447,9 +434,8 @@
         <p>Three NVENC engines drive the <b>split-frame 8K60</b> encode; runs the headless campaign engine
           the console relays to.</p></div>
       <div class="card"><p class="label">Mux + packager</p><h3>NVIDIA L4 · g6</h3>
-        <p>Receives the SRT contribution, packages <b>CMAF / HLS</b>, pushes the four-rung ladder into
-          MediaPackage, and transcodes the <b>4K / 1080p / 720p rungs</b> — without ever touching the
-          encoder's pace.</p></div>
+        <p>Receives the SRT contribution, packages <b>CMAF / HLS</b>, pushes the two-variant ladder into
+          MediaPackage, and transcodes the <b>1080p preview</b> — without ever touching the encoder's pace.</p></div>
       <div class="card"><p class="label">Control plane</p><h3>Console · t3.small</h3>
         <p>Always on: TLS + per-user auth, the pipeline graph, <b>fleet start/stop</b>, campaign relay, the
           hosted player, and the instrument health check. Survives fleet power-cycling.</p></div>
@@ -498,22 +484,34 @@
             stage measured; its first run caught a real probe defect, and the verdict trail (unhealthy →
             fix → healthy) is on record in the audit log.</li>
           <li><b>Cross-machine clocks</b> µs-synced to the AWS time source, so one-way SRT timing is trustworthy.</li>
-          <li><b>Sub-segment low latency</b> probes follow LL-HLS partial segments: <b>1.40&nbsp;s</b>
-            freshness at the packager egress and ≈1.5&nbsp;s at the CDN edge and player vantages — measured
-            at the granularity low latency is sold at.</li>
-          <li><b>Encode quality, frame-exact</b> VMAF at the encode boundary on the current model generation,
-            tiled across native-4K quadrants for 8K, with the burned-in instrumentation masked identically on
-            both sides so the ruler never marks the glass. Live ticker + report stats, E2E on real footage.</li>
-          <li><b>Delivery resilience, root-caused</b> a real long-RTT viewer stall reproduced under emulated
-            loss (cubic ≈550&nbsp;B/s vs BBR 73&nbsp;Mbps at 1% loss); origins tuned accordingly, and
-            per-vantage fetch-rate headroom now stands guard in every report.</li>
+          <li><b>Multichannel audio rides free</b> 16 channels (2×7.1 AAC) through the full chain with
+            video latency moving ≤~3% at every stage — measured in paired A/B runs on the fleet, not
+            assumed. 32 channels (4×7.1) proven through a real NVENC encode locally, 32/32 per-channel
+            identity intact.</li>
+          <li><b>Channel identity is checkable live</b> any channel soloed at the source mid-run via a
+            runtime filter command (no restart, container timing untouched), auto-verdicts from the
+            player's per-channel FFT, auditable line-check records saved.</li>
+          <li><b>Quality scored where pixels change</b> VMAF v1 (4K@1.5H, native 4K windows — no
+            downscaling) + CAMBI banding, frame-exact-aligned by the QR, written into every campaign
+            report.</li>
         </ul>
       </div>
 
       <div class="status-col todo">
-        <div class="status-head"><h3>Still to validate</h3><span class="count">1 open</span></div>
-        <p class="sub">Resilience — doesn't block the core numbers.</p>
+        <div class="status-head"><h3>Still to validate</h3><span class="count">5 open</span></div>
+        <p class="sub">Coverage and resilience — none blocks the core numbers.</p>
         <ul class="status-list">
+          <li><b>Transmission mode on a real network</b> the unbounded-run machinery (rolling windows,
+            reconnecting contribution, drop accounting) is merged and locally proven; its first
+            real-network outing and a live link-stats sidecar are next fleet session.</li>
+          <li><b>Audio egress forensics</b> per-track channel identity at the CDN edge needs mid-run
+            captured evidence (the post-run tail proved unreadable once) — a one-click capture tool now
+            exists for exactly this.</li>
+          <li><b>Line-check on the fleet</b> the channel-check mechanism is proven locally on real NVENC;
+            the fleet encoder's rebuilt FFmpeg (azmq) makes the on-fleet run possible next session.</li>
+          <li><b>Sub-segment low latency</b> the LL-HLS endpoint publishes real partial segments, but the
+            probes read whole-segment freshness — part-level probing is what proves the low-latency story
+            downstream of packaging.</li>
           <li><b>Encoder redundancy &amp; sync</b> run a hot-standby encoder frame- and timecode-aligned with
             the primary, and exercise the failover workflow end to end.</li>
         </ul>
@@ -531,12 +529,15 @@
         <div class="lane-head"><h3>From instrument to findings</h3><span class="lane-tag">Up next</span></div>
         <p class="sub">The ruler is trusted — now use it on the biggest costs it found.</p>
         <ul class="feat">
-          <li><b>Rate–distortion sweeps</b> — one-click bitrate sweeps (the 40/80/120&nbsp;Mbps presets are
-            in the console) with BD-rate deltas and a side-by-side report compare view.</li>
-          <li><b>Hunt the packaging budget</b> — packaging remains the dominant hop on the segment path;
-            segment cadence, window sizes, and ingest pacing are now individually measurable.</li>
+          <li><b>Hunt the packaging budget</b> — ~3 of the 4 glass-to-glass seconds live in packaging + the
+            packager egress; segment cadence, window sizes, and ingest pacing are now individually measurable.</li>
+          <li><b>Chunk-aware probing</b> — part-level LL-HLS measurement, so low latency is proven at the granularity it's sold at.</li>
           <li><b>Encoder redundancy &amp; sync</b> — a hot-standby encoder kept frame- and timecode-aligned, with tested failover.</li>
-          <li><b>Multi-user roles</b> — per-user logins shipped; next is viewer-vs-operator scoping so guests can watch without controlling the fleet.</li>
+          <li><b>Roles &amp; administration</b> — admin / operator / partner scoping enforced at the API,
+            with in-app user management and an audit browser: partners get one-click tests and the
+            Confidence monitor, never the sharp tools. The final arc of the console overhaul.</li>
+          <li><b>Versioned releases</b> — the shift from spike to product: CI on every merge, CalVer-tagged
+            releases, production pinned to tags with a real rollback story. In progress.</li>
           <li><b>Player race mode</b> — LL-HLS, HLS, and DASH playing the same stream side by side, each with its own latency readout.</li>
         </ul>
       </div>
@@ -545,14 +546,14 @@
         <div class="lane-head"><h3>Broadening the instrument</h3><span class="lane-tag">Planned</span></div>
         <p class="sub">More formats and modes for the pipelines you actually run.</p>
         <ul class="feat">
+          <li><b>A/V sync gate + audio latency artifact</b> — the video QR has an audio sibling coming (an
+            in-band data channel carrying the same epoch payload), enabling measured audio-path latency and
+            lip-sync verdicts, not just channel identity.</li>
+          <li><b>Simultaneous multi-track playback semantics</b> — HLS lists N audio tracks as alternatives;
+            proving all-tracks-at-once delivery semantics per surface is an open question with a session
+            planned around it.</li>
           <li><b>DASH-MPD live measurement</b> — probe DASH manifests directly; endpoint polling is HLS-only today.</li>
-          <li><b>Audio + A/V sync</b> — carry an audio track and measure audio latency and lip-sync alongside video.</li>
-          <li><b>Automated stream QC</b> — spec-conformance (Apple's validator) and strict-decode passes
-            folded into the campaign report.</li>
-          <li><b>Edge banding screen</b> — a no-reference CAMBI check at the delivery edge, guarding the
-            last mile the encode-boundary VMAF can't see.</li>
           <li><b>VVC (H.266) support</b> — bring the next-generation codec into the encoder lineup.</li>
-          <li><b>Continuous monitor mode</b> — run as a persistent latency logger with trends, beyond discrete campaigns.</li>
         </ul>
       </div>
 
@@ -560,7 +561,11 @@
         <div class="lane-head"><h3>Reach &amp; production</h3><span class="lane-tag">Exploratory</span></div>
         <p class="sub">The larger platform Prism is growing toward.</p>
         <ul class="feat">
-          <li><b>On-prem encoder + hardware PTP clock</b> — an on-site encoder disciplined by a PTP grandmaster, with hybrid on-prem↔cloud timing.</li>
+          <li><b>On-prem encoder + hardware PTP clock</b> — an on-site GPU encoder disciplined by a GPS
+            PTP grandmaster, with hybrid on-prem↔cloud timing. Hardware specified and priced.</li>
+          <li><b>Live camera chain</b> — an 8K cinema camera feeding the encoder over IP (compressed RAW
+            over fiber, decoded and encoded on one GPU), bringing real glass, real motion, and real light
+            into every number. Sourcing conversations underway.</li>
           <li><b>VOD platform</b> — S3 + CloudFront playback of recorded campaigns, fed from the managed origin.</li>
           <li><b>More edge regions</b> — the two-continent probe fleet is live and one script-run per region to grow (Asia-Pacific, South America).</li>
         </ul>
@@ -580,6 +585,39 @@
 
 </div>
 </div>
+
+<script>
+/* Auto-collapse "What's new" entries older than 10 days into a closed <details>.
+   Dates are parsed from each entry's .d span ("Jul 8 '26"); entries that fail to
+   parse stay visible. No-JS fallback: everything stays visible. */
+(function(){
+  var list = document.querySelector("ul.updates");
+  if (!list) return;
+  var MONTHS = {Jan:0,Feb:1,Mar:2,Apr:3,May:4,Jun:5,Jul:6,Aug:7,Sep:8,Oct:9,Nov:10,Dec:11};
+  var cutoff = Date.now() - 10*24*60*60*1000;
+  var old = [];
+  list.querySelectorAll(":scope > li").forEach(function(li){
+    var d = li.querySelector(".d"); if (!d) return;
+    var m = d.textContent.trim().match(/^([A-Za-z]{3})\s+(\d{1,2})\s+'(\d{2})$/);
+    if (!m || !(m[1] in MONTHS)) return;
+    var t = new Date(2000 + +m[3], MONTHS[m[1]], +m[2]).getTime();
+    if (t < cutoff) old.push(li);
+  });
+  if (!old.length) return;
+  var det = document.createElement("details");
+  det.style.cssText = "margin-top:14px;border-top:1px solid var(--line-soft);padding-top:10px;";
+  var sum = document.createElement("summary");
+  sum.textContent = "Earlier updates (" + old.length + ")";
+  sum.style.cssText = "cursor:pointer;font-family:var(--font-mono);font-size:.72rem;" +
+    "letter-spacing:.14em;text-transform:uppercase;color:var(--muted);";
+  det.appendChild(sum);
+  var ul = document.createElement("ul");
+  ul.className = "updates";
+  old.forEach(function(li){ ul.appendChild(li); });
+  det.appendChild(ul);
+  list.parentNode.insertBefore(det, list.nextSibling);
+})();
+</script>
 
 </body>
 </html>
