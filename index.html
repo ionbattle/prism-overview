@@ -325,12 +325,21 @@
 
   <section aria-labelledby="model-h">
     <p class="eyebrow">The measurement model</p>
-    <h2 id="model-h">One timecode, followed across seven stages</h2>
+    <h2 id="model-h">One timecode, followed from the lens to the screen</h2>
     <p class="section-note">Every frame carries a QR timecode stamped with its emission epoch. Latency at any
-      point is simply that frame's own age when it is seen there — no cross-clock arithmetic, no assumptions.</p>
+      point is simply that frame's own age when it is seen there — no cross-clock arithmetic, no assumptions.
+      With a real camera there are two references, kept separate on purpose: <b>pipeline latency</b> (T0→T6,
+      from the encoder's stamp) and <b>glass-to-glass</b> (acquisition + pipeline, from the scene itself). The
+      acquisition stage exists because of the <b>camera slate page</b> — a full-screen QR clock (with
+      stamp-hold and sync bands) that any display can show and any camera can film, putting real-world time
+      onto the glass itself.</p>
 
     <div class="rail-scroll">
       <div class="rail">
+        <div class="stage measured"><div class="node">
+          <span class="tid">ACQ</span><div class="sname">Acquisition</div>
+          <p class="sdesc">Lens→capture: the filmed slate's clock vs the encoder's stamp, in the same frame.</p><span class="method precise">Differential</span>
+        </div></div>
         <div class="stage measured"><div class="node">
           <span class="tid">T0</span><div class="sname">Origin</div>
           <p class="sdesc">Timecode stamped into the frame.</p><span class="method exact">Known exactly</span>
@@ -362,8 +371,13 @@
       </div>
     </div>
     <p class="rail-caption"><b>Precise</b> stages catch the exact frame (frame-level age); <b>freshness</b>
-      stages read the newest served frame. A warm-up window keeps pipeline spin-up out of the numbers, and
-      every run resets to zero, so results reflect steady state — not the first noisy seconds.</p>
+      stages read the newest served frame. <b>Acquisition</b> is deliberately not a T-stage: it is a
+      same-frame differential — a frame that shows the filmed slate AND carries the encoder's stamp yields
+      camera→capture time with the observer's clock cancelled out — and it carries its own error sources
+      (display lag, exposure, slate↔encoder clock agreement), stated in every report. Measured on the real
+      camera days: latency numbers are <b>lens-referenced off the glass</b>, not just encoder-referenced. A
+      warm-up window keeps pipeline spin-up out of the numbers, and every run resets to zero, so results
+      reflect steady state — not the first noisy seconds.</p>
   </section>
 
   <section aria-labelledby="does-h">
@@ -373,9 +387,10 @@
       through playback, with the instrumentation an ordinary encoder can't provide.</p>
 
     <div class="grid">
-      <div class="card"><p class="label">Originate</p><h3>Generate the source</h3>
-        <p>A test pattern, a pre-rendered file, or the <b>instrumented QR-timecode</b> source that carries the
-          measurement. Any resolution up to <b>8K</b>.</p></div>
+      <div class="card"><p class="label">Originate</p><h3>Generate the source — or film it</h3>
+        <p>A test pattern, a pre-rendered file, the <b>instrumented QR-timecode</b> source — or a real camera
+          filming the <b>slate page</b>, a full-screen QR clock that puts scene time on the glass. Any
+          resolution up to <b>8K</b>.</p></div>
       <div class="card"><p class="label">Encode</p><h3>Hardware or software</h3>
         <p>NVENC <b>H.264 / HEVC / AV1</b> or libx264/libx265, with presets, rate control, and <b>split-frame
           encoding</b> across multiple NVENC engines for 8K. Never falls back to CPU silently.</p></div>
@@ -386,7 +401,8 @@
           origin access.</p></div>
       <div class="card"><p class="label">Measure</p><h3>Per-frame latency</h3>
         <p>QR-timecode latency across <b>T0→T6</b> — precise where the exact frame can be caught, freshness
-          where only the newest segment is visible.</p></div>
+          where only the newest segment is visible — plus the <b>acquisition differential</b> when a camera
+          films the slate, so glass-to-glass is measured from the scene, never inferred.</p></div>
       <div class="card"><p class="label">Span continents</p><h3>Distributed probes</h3>
         <p>Passive probes on separate instances — including <b>CDN-edge boxes on the US East Coast and in
           Europe</b> — measure real cross-network hops with clock-synced one-way timing.</p></div>
