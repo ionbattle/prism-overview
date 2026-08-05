@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Prism — Overview</title>
-<meta name="description" content="Prism — a precision instrument for validating end-to-end 8K video workflows in the cloud. What it does, what it tests, recent updates, validation status, and the roadmap.">
+<meta name="description" content="Prism — an instrumented platform for producing and delivering live 8K broadcasts, with per-stage latency measured end to end. Features, testing results, validation status, and the roadmap.">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='88'>%E2%8F%B1%EF%B8%8F</text></svg>">
 <style>
   :root{
@@ -206,20 +206,20 @@
 <div class="wrap">
 
   <header>
-    <p class="eyebrow">8K cloud-workflow validation</p>
+    <p class="eyebrow">Instrumented 8K delivery</p>
     <h1>Prism</h1>
-    <p class="lede"><b>Prism is a precision instrument for validating end-to-end 8K video workflows in the
-      cloud.</b> It originates an instrumented stream, encodes and transmits it, and measures the true
-      glass-to-glass latency at every stage of the delivery chain — proving that a full-resolution 8K
-      pipeline on cloud GPUs holds real time and stays inside its latency budget. Because Prism stamps
-      time-zero into every frame, it can measure all of this without guessing.</p>
+    <p class="lede"><b>Prism is an instrumented platform for producing live 8K broadcasts and delivering
+      them to the screens.</b> It takes a real contribution — a cinema camera or its own instrumented
+      source — encodes it, packages it in the cloud, and delivers it globally, measuring true per-stage
+      latency the whole way. Because every frame carries its own timestamp (stamped in, or filmed off an
+      optical slate), Prism measures all of this without guessing.</p>
 
     <div class="readouts" role="group" aria-label="Current validated state">
-      <div class="ro"><p class="k">Encode load</p><div class="v">8K60 HEVC · <b>1.0×</b> real-time</div></div>
-      <div class="ro"><p class="k">Glass-to-glass</p><div class="v"><b>≈4&nbsp;s</b> via CDN <span class="ok">measured</span></div></div>
-      <div class="ro"><p class="k">Pipeline</p><div class="v">T0→T6 <span class="ok">all measured</span></div></div>
-      <div class="ro"><p class="k">CDN edges</p><div class="v"><b>3 regions</b> <span class="ok">measured</span></div></div>
-      <div class="ro"><p class="k">Audio</p><div class="v"><b>16ch</b> <span class="ok">fleet-proven</span> · 32ch local</div></div>
+      <div class="ro"><p class="k">Live camera</p><div class="v"><b>8K59.94</b> lens→screen <span class="ok">measured</span></div></div>
+      <div class="ro"><p class="k">Contribution</p><div class="v"><b>140&nbsp;Mbps</b> · <b>0</b> drops <span class="ok">measured</span></div></div>
+      <div class="ro"><p class="k">Pipeline</p><div class="v">T0→T6 <span class="ok">all measured</span> · CDN ≈<b>3.6&nbsp;s</b></div></div>
+      <div class="ro"><p class="k">Real player</p><div class="v"><b>≈6&nbsp;s</b> post-decode <span class="ok">measured</span></div></div>
+      <div class="ro"><p class="k">Audio</p><div class="v"><b>5.1</b> <span class="ok">CDN-proven</span> · 16ch fleet</div></div>
       <div class="ro"><p class="k">Quality</p><div class="v"><b>VMAF&nbsp;v1</b> + CAMBI <span class="ok">every run</span></div></div>
     </div>
   </header>
@@ -228,6 +228,43 @@
     <p class="eyebrow">Recent updates</p>
     <h2 id="upd-h">What's new</h2>
     <ul class="updates">
+      <li><span class="d">Aug 5 '26</span><div class="t"><b>Stress-tested at the ceiling.</b> Worst-case
+        grain content, 8K59.94 HEVC at <b>140&nbsp;Mbps</b>, through the contribution rail: 10.7&nbsp;GB in a
+        638&nbsp;s session with <b>zero drops</b> and the encoder at half its NVENC capacity. Packager
+        segments ran 17.8&nbsp;MB — under the origin's cap with margin — and back-to-back sessions re-entered
+        cleanly in seconds. Release <b>v2026.8.11</b> cut the same night.</div></li>
+      <li><span class="d">Aug 5 '26</span><div class="t"><b>59.94 is now exact, end to end.</b> Fractional
+        (NTSC) rates ride as true rationals, segment durations snap to whole keyframe groups
+        (a 2&nbsp;s target becomes exactly 2.002&nbsp;s), and manifests declare <b>actual</b> segment
+        durations — declared and delivered now agree to the microsecond, at any cadence. No integer
+        keyframe count fits an integer second at 59.94; the pipeline stops pretending otherwise.</div></li>
+      <li><span class="d">Aug 4 '26</span><div class="t"><b>Remote contributor control.</b> On-prem encode
+        boxes are now fleet members: an outbound-only agent (venue NAT never matters) converges the box to
+        the console's desired state, and the Fleet view starts/stops the SRT contribution remotely — with
+        saved destinations, write-only passphrases, bitrate/preset handles, and a stop-first guard so
+        nothing ever silently retargets a live stream. Proven end to end on real rented hardware.</div></li>
+      <li><span class="d">Aug 4 '26</span><div class="t"><b>The player probe got its own box — and the
+        delivery numbers got honest.</b> The real-player (post-decode) probe now runs on a dedicated
+        instance, after measurement was caught starving the packager it measured. With the load moved,
+        the managed origin's real cost is <b>~1.4&nbsp;s</b> — the earlier ~7.7&nbsp;s figure was the
+        starved box, and it is retracted. Best full-run medians now: encode 0.67&nbsp;s, packager egress
+        2.4&nbsp;s, real player ≈6&nbsp;s.</div></li>
+      <li><span class="d">Aug 3 '26</span><div class="t"><b>A real camera, live, measured from the
+        lens.</b> An 8K cinema camera fed the chain over quad-link SDI on the on-prem contributor:
+        <b>8K59.94 live end to end</b>, 10-minute runs at 60&nbsp;fps / speed 1.00× / zero drops,
+        75–82&nbsp;Mbps delivered. A filmed <b>optical slate</b> anchors time-zero at the glass, so
+        latency is lens-referenced, not encoder-referenced — the acquisition stage is now part of the
+        measurement model, and "not measured" is never shown as zero.</div></li>
+      <li><span class="d">Aug 3 '26</span><div class="t"><b>Surround through the managed origin,
+        proven at the edge.</b> 5.1 AAC delivered through the full chain with <b>6/6 channel identity
+        confirmed at the CDN</b>. The historical "undecodable multichannel" defect was root-caused: a
+        layout whose channel map rode in an in-band descriptor the re-packager drops. The wire format is
+        now measured per encoder build and the preflight refuses layouts that would not survive.</div></li>
+      <li><span class="d">Jul 31 '26</span><div class="t"><b>Recording and versioned releases.</b> Every
+        contribution can be captured to object storage <b>as it streams</b> (crash-safe partial masters,
+        integrity-hashed), with an asset library, downloads, guarded delete, and frame-exact clips. The
+        platform itself moved to CalVer releases: CI on every merge, tagged releases, production pinned to
+        tags with a real rollback story.</div></li>
       <li><span class="d">Jul 28 '26</span><div class="t"><b>Transmission mode.</b> Beyond bounded test
         campaigns: unbounded runs with <b>rolling window reports</b> (configurable cadence), an SRT
         contribution leg that reconnects instead of dying silently, and honest <b>drop accounting</b> —
@@ -332,8 +369,8 @@
   <section aria-labelledby="does-h">
     <p class="eyebrow">Capabilities</p>
     <h2 id="does-h">What it does</h2>
-    <p class="section-note">A complete test rig in one toolset — origination through playback, with the
-      instrumentation an ordinary encoder can't provide.</p>
+    <p class="section-note">The whole chain in one platform — origination or real-camera contribution
+      through playback, with the instrumentation an ordinary encoder can't provide.</p>
 
     <div class="grid">
       <div class="card"><p class="label">Originate</p><h3>Generate the source</h3>
@@ -403,24 +440,26 @@
         <div class="chain">
           <div class="gnode gen"><div class="gnid">Generator</div><div class="gmeta">T0</div></div>
           <div class="gedge"><span class="elabel">encode</span><span class="eline"></span></div>
-          <div class="gnode"><div class="gnid">enc-t1</div><div class="gmeta">encode · T1</div><div class="gms">461 ms</div><div class="gdec">337/339 ok</div></div>
+          <div class="gnode"><div class="gnid">enc-t1</div><div class="gmeta">encode · T1</div><div class="gms">673 ms</div><div class="gdec">1216 frames ok</div></div>
           <div class="gedge"><span class="elabel">SRT</span><span class="eline"></span></div>
-          <div class="gnode"><div class="gnid">mux-t2</div><div class="gmeta">SRT · T2</div><div class="gms">713 ms</div><div class="gdec">337/338 ok</div></div>
+          <div class="gnode"><div class="gnid">mux-t2</div><div class="gmeta">SRT · T2</div><div class="gms">937 ms</div><div class="gdec">1146 frames ok</div></div>
           <div class="gedge"><span class="elabel">origin</span><span class="eline"></span></div>
-          <div class="gnode"><div class="gnid">mux-1</div><div class="gmeta">origin · T3</div><div class="gms">2871 ms</div><div class="gdec">468/542 ok</div></div>
+          <div class="gnode"><div class="gnid">mux-1</div><div class="gmeta">origin · T3</div><div class="gms">783 ms</div><div class="gdec">1437 frames ok</div></div>
           <div class="gedge"><span class="elabel">egress</span><span class="eline"></span></div>
-          <div class="gnode"><div class="gnid">mpv2-t4</div><div class="gmeta">egress · T4</div><div class="gms">3882 ms</div><div class="gdec">360/360 ok</div></div>
+          <div class="gnode"><div class="gnid">mpv2-t4</div><div class="gmeta">egress · T4</div><div class="gms">2442 ms</div><div class="gdec">234 frames ok</div></div>
           <div class="gedge"><span class="elabel">CDN</span><span class="eline"></span></div>
-          <div class="gnode"><div class="gnid">cdn-euc1</div><div class="gmeta">CDN · T5</div><div class="gms">5395 ms</div><div class="gdec">336/336 ok</div></div>
+          <div class="gnode"><div class="gnid">cdn-usw2</div><div class="gmeta">CDN · T5</div><div class="gms">2479 ms</div><div class="gdec">222 frames ok</div></div>
           <div class="gedge"><span class="elabel">player</span><span class="eline"></span></div>
-          <div class="gnode"><div class="gnid">player-t5</div><div class="gmeta">player · T6</div><div class="gms">3841 ms</div><div class="gdec">372/372 ok</div></div>
+          <div class="gnode"><div class="gnid">player-t6</div><div class="gmeta">player · T6</div><div class="gms">5973 ms</div><div class="gdec">917 frames ok</div></div>
         </div>
       </div>
     </div>
-    <p class="rail-caption">Ages are cumulative from T0. Encode and SRT are <b>sub-second</b>; packaging and
-      delivery carry the rest of the budget. At T5 the chain fans out per region — the Frankfurt edge shown
-      here reads ≈5.4&nbsp;s while the home-region edge reads ≈3.6&nbsp;s and Virginia ≈4.5&nbsp;s — and the
-      player (T6) watches its nearest edge, so its age can sit below a farther PoP's.</p>
+    <p class="rail-caption">Ages are cumulative from T0, from an 8K fleet run on 2026-08-05. Encode and
+      SRT are <b>sub-second</b>; the origin (T3) is a freshness reading of the newest served segment, so it
+      can sit below the SRT frame-catch median — different measurement methods, both labeled. T6 is the
+      <b>real player</b>: fetch through the CDN, buffer, hardware decode, render — everything a viewer
+      experiences, read off the rendered frame. At T5 the chain fans out per region (US East ≈+0.9&nbsp;s,
+      Frankfurt ≈+1.8&nbsp;s over the home edge).</p>
   </section>
 
   <section aria-labelledby="rig-h">
@@ -460,13 +499,13 @@
   <section aria-labelledby="status-h">
     <p class="eyebrow">Where it stands</p>
     <h2 id="status-h">Validated so far — and what's left</h2>
-    <p class="section-note">The measurement chain is proven end to end at 8K, through a managed origin, to a
-      real player. What remains extends geographic coverage and resilience — none of it blocks the numbers
-      that already work.</p>
+    <p class="section-note">The chain is proven end to end at 8K — from a real camera, through a managed
+      origin, to a real player. What remains extends audio width, low-latency granularity, and resilience —
+      none of it blocks the numbers that already work.</p>
 
     <div class="status-grid">
       <div class="status-col done">
-        <div class="status-head"><h3>Validated</h3><span class="count">12 confirmed</span></div>
+        <div class="status-head"><h3>Validated</h3><span class="count">18 confirmed</span></div>
         <p class="sub">Demonstrated on real hardware, with pass/fail gates where it counts.</p>
         <ul class="status-list">
           <li><b>Timecode survivability</b> 600 / 600 frames (100%) decoded through 8K HEVC NVENC — the QR carrier survives the encode.</li>
@@ -494,26 +533,41 @@
           <li><b>Quality scored where pixels change</b> VMAF v1 (4K@1.5H, native 4K windows — no
             downscaling) + CAMBI banding, frame-exact-aligned by the QR, written into every campaign
             report.</li>
+          <li><b>A real camera, live</b> 8K59.94 from a cinema camera over quad-link SDI, live through the
+            whole chain: 10-minute runs at 60&nbsp;fps / 1.00× / zero drops, 75–82&nbsp;Mbps delivered, with
+            lens-referenced latency anchored by a filmed optical slate.</li>
+          <li><b>Open-ended transmission on the real estate</b> rolling window reports, a reconnecting
+            contribution, and honest drop accounting — a live 20&nbsp;s packager outage was counted as one
+            26.2&nbsp;s drop window and the run survived it.</li>
+          <li><b>Contribution rail at the ceiling</b> streamid-filtered SRT ingest held 8K59.94 HEVC at
+            140&nbsp;Mbps with zero drops on worst-case content; between-session refresh is automatic and
+            re-entry takes seconds.</li>
+          <li><b>Surround at the edge</b> 5.1 through the managed origin with 6/6 channel identity confirmed
+            at the CDN; wire formats are measured per encoder build and unsurvivable layouts are refused
+            before they ship.</li>
+          <li><b>Fractional-rate exactness</b> at 59.94 the declared and delivered segment durations agree
+            to the microsecond (whole-GOP segment snapping + actual-duration manifests) — cadence drift is
+            structurally gone.</li>
+          <li><b>Recording &amp; remote contribution</b> streaming capture to object storage with integrity
+            hashes and frame-exact clips; on-prem encoder boxes join the fleet and start/stop their SRT
+            contribution from the console over an outbound-only control plane.</li>
         </ul>
       </div>
 
       <div class="status-col todo">
-        <div class="status-head"><h3>Still to validate</h3><span class="count">5 open</span></div>
-        <p class="sub">Coverage and resilience — none blocks the core numbers.</p>
+        <div class="status-head"><h3>Still to validate</h3><span class="count">4 open</span></div>
+        <p class="sub">Width, granularity, and resilience — none blocks the core numbers.</p>
         <ul class="status-list">
-          <li><b>Transmission mode on a real network</b> the unbounded-run machinery (rolling windows,
-            reconnecting contribution, drop accounting) is merged and locally proven; its first
-            real-network outing and a live link-stats sidecar are next fleet session.</li>
-          <li><b>Audio egress forensics</b> per-track channel identity at the CDN edge needs mid-run
-            captured evidence (the post-run tail proved unreadable once) — a one-click capture tool now
-            exists for exactly this.</li>
-          <li><b>Line-check on the fleet</b> the channel-check mechanism is proven locally on real NVENC;
-            the fleet encoder's rebuilt FFmpeg (azmq) makes the on-fleet run possible next session.</li>
+          <li><b>8-channel audio through the managed origin</b> 5.1 is proven at the edge; wider layouts
+            need the direct-origin audio lane (built, dark) or an origin-side fix — the remaining width
+            question, not a correctness one.</li>
           <li><b>Sub-segment low latency</b> the LL-HLS endpoint publishes real partial segments, but the
             probes read whole-segment freshness — part-level probing is what proves the low-latency story
             downstream of packaging.</li>
           <li><b>Encoder redundancy &amp; sync</b> run a hot-standby encoder frame- and timecode-aligned with
             the primary, and exercise the failover workflow end to end.</li>
+          <li><b>Camera-clock discipline</b> the filmed-slate acquisition stage is live; a PTP-disciplined
+            camera clock is what tightens the lens-referenced numbers further. Hardware specified.</li>
         </ul>
       </div>
     </div>
@@ -529,15 +583,13 @@
         <div class="lane-head"><h3>From instrument to findings</h3><span class="lane-tag">Up next</span></div>
         <p class="sub">The ruler is trusted — now use it on the biggest costs it found.</p>
         <ul class="feat">
-          <li><b>Hunt the packaging budget</b> — ~3 of the 4 glass-to-glass seconds live in packaging + the
-            packager egress; segment cadence, window sizes, and ingest pacing are now individually measurable.</li>
+          <li><b>Direct-origin audio lane</b> — a parallel audio path that bypasses the managed origin's
+            re-packaging entirely, unlocking 8-channel-and-wider layouts. Core built and dark-flagged; the
+            cloud remainder is next.</li>
+          <li><b>Keep hunting the packaging budget</b> — cadence exactness landed and the origin's true cost
+            is now ~1.4&nbsp;s; window sizes and ingest pacing remain individually measurable dials.</li>
           <li><b>Chunk-aware probing</b> — part-level LL-HLS measurement, so low latency is proven at the granularity it's sold at.</li>
           <li><b>Encoder redundancy &amp; sync</b> — a hot-standby encoder kept frame- and timecode-aligned, with tested failover.</li>
-          <li><b>Roles &amp; administration</b> — admin / operator / partner scoping enforced at the API,
-            with in-app user management and an audit browser: partners get one-click tests and the
-            Confidence monitor, never the sharp tools. The final arc of the console overhaul.</li>
-          <li><b>Versioned releases</b> — the shift from spike to product: CI on every merge, CalVer-tagged
-            releases, production pinned to tags with a real rollback story. In progress.</li>
           <li><b>Player race mode</b> — LL-HLS, HLS, and DASH playing the same stream side by side, each with its own latency readout.</li>
         </ul>
       </div>
@@ -561,12 +613,15 @@
         <div class="lane-head"><h3>Reach &amp; production</h3><span class="lane-tag">Exploratory</span></div>
         <p class="sub">The larger platform Prism is growing toward.</p>
         <ul class="feat">
-          <li><b>On-prem encoder + hardware PTP clock</b> — an on-site GPU encoder disciplined by a GPS
-            PTP grandmaster, with hybrid on-prem↔cloud timing. Hardware specified and priced.</li>
-          <li><b>Live camera chain</b> — an 8K cinema camera feeding the encoder over IP (compressed RAW
-            over fiber, decoded and encoded on one GPU), bringing real glass, real motion, and real light
-            into every number. Sourcing conversations underway.</li>
-          <li><b>VOD platform</b> — S3 + CloudFront playback of recorded campaigns, fed from the managed origin.</li>
+          <li><b>Hardware PTP clock</b> — the on-prem contributor disciplined by a GPS PTP grandmaster,
+            tightening lens-referenced timing further. Hardware specified and priced; the camera chain
+            itself is now proven (see Validated).</li>
+          <li><b>Super-resolution, census-first</b> — frontier upscalers measured honestly on the fleet GPU:
+            the first census point puts diffusion-based 4K→8K at ~0.12&nbsp;fps (~500× off real time) on a
+            single 48&nbsp;GB card via 2×2 tiling. Realtime remains a 1080p→4K story; venue-scale needs
+            multi-GPU tiling. The curve, not the hype, drives what ships.</li>
+          <li><b>Venue playout integration</b> — driving the screen media servers directly from the
+            delivery chain, closing the last hop.</li>
           <li><b>More edge regions</b> — the two-continent probe fleet is live and one script-run per region to grow (Asia-Pacific, South America).</li>
         </ul>
       </div>
