@@ -208,19 +208,19 @@
   <header>
     <p class="eyebrow">Instrumented 8K delivery</p>
     <h1>Prism</h1>
-    <p class="lede"><b>Prism is an instrumented platform for producing live 8K broadcasts and delivering
-      them to the screens.</b> It takes a real contribution — a cinema camera or its own instrumented
-      source — encodes it, packages it on its own low-latency origin, and delivers it globally, measuring true per-stage
-      latency the whole way. Because every frame carries its own timestamp (stamped in, or filmed off an
-      optical slate), Prism measures all of this without guessing.</p>
+    <p class="lede"><b>Prism produces live 8K broadcasts, delivers them to screens, and measures every step
+      on the way.</b> It takes a real feed — a cinema camera, or its own test source — encodes it, packages it
+      on its own low-latency origin (the server the CDN pulls from), and delivers it worldwide. Every frame
+      carries its own timestamp, stamped in at the encoder or filmed off a clock on set, so the delay at
+      each stage is read directly from the picture, never estimated.</p>
 
     <div class="readouts" role="group" aria-label="Current validated state">
       <div class="ro"><p class="k">Live camera</p><div class="v"><b>8K59.94</b> lens→screen <span class="ok">measured</span></div></div>
       <div class="ro"><p class="k">First production show</p><div class="v"><b>7h03m</b> 8K60 · <b>447&nbsp;GB</b> <span class="ok">delivered</span></div></div>
-      <div class="ro"><p class="k">Own origin</p><div class="v"><b>≈1.0&nbsp;s</b> egress · <b>300&nbsp;Mbps</b> <span class="ok">measured</span></div></div>
-      <div class="ro"><p class="k">Real player</p><div class="v"><b>≈3.7&nbsp;s</b> 4K · <b>≈5.7&nbsp;s</b> 8K <span class="ok">measured</span></div></div>
-      <div class="ro"><p class="k">Audio</p><div class="v"><b>2×5.1</b> <span class="ok">6/6 at the edge</span> · 16ch fleet</div></div>
-      <div class="ro"><p class="k">Apple</p><div class="v">validator <span class="ok">clean</span> · 8K in <b>10&nbsp;s</b></div></div>
+      <div class="ro"><p class="k">Origin delay</p><div class="v"><b>≈1.0&nbsp;s</b> · up to <b>300&nbsp;Mbps</b> <span class="ok">measured</span></div></div>
+      <div class="ro"><p class="k">Viewer delay</p><div class="v"><b>≈3.7&nbsp;s</b> at 4K · <b>≈5.7&nbsp;s</b> at 8K <span class="ok">measured</span></div></div>
+      <div class="ro"><p class="k">Surround audio</p><div class="v"><b>2×5.1</b> <span class="ok">intact at the edge</span></div></div>
+      <div class="ro"><p class="k">Apple's tools</p><div class="v"><span class="ok">pass</span> · Apple's player at 8K in <b>10&nbsp;s</b></div></div>
     </div>
   </header>
 
@@ -228,77 +228,76 @@
     <p class="eyebrow">Recent updates</p>
     <h2 id="upd-h">What's new</h2>
     <ul class="updates">
-      <li><span class="d">Sep 13 '26</span><div class="t"><b>MediaPackage retired; the estate slimmed.</b> Prism's
-        own origin is the only delivery lane now: the MediaPackage push, its signing proxy and the
-        direct-audio side lane are out of the tree (<b>v2026.8.23</b>); the origin box powers on and off
-        with the fleet, the second (software-decode) player box and the always-on partner playout box are
-        gone (<b>v2026.8.24</b>). Always-on is the console alone; everything else costs nothing between
-        runs.</div></li>
-      <li><span class="d">Sep 13 '26</span><div class="t"><b>LL-DASH: 9.35&nbsp;s → 3.71&nbsp;s, and it was
-        not the player.</b> ffmpeg's DASH muxer stamps <code>availabilityStartTime</code> only after its
-        input probe, so the manifest's whole timeline ran <b>5.8&nbsp;s late</b> on the fleet and dash.js
-        reported its 3&nbsp;s target as met while the frames were 9&nbsp;s old. The origin now anchors the
-        timeline on the segments' own producer-reference clock. Same box, same manifest through CloudFront:
-        <b>3.71&nbsp;s</b> glass to glass at 4K/60&nbsp;fps. Found on the way: CloudFront caches origin
-        errors for 10&nbsp;s by default whatever the origin says — turned off for the live edge.</div></li>
-      <li><span class="d">Sep 12 '26</span><div class="t"><b>Lit on production, Apple-clean.</b> The origin
-        lane went live under its feature flag after a full fleet day: health canary healthy on every stage,
-        a low-latency-mode A/B, a <b>300&nbsp;Mbps</b> run with zero refusals, a 15-minute Apple window. A
-        temporary EC2 Mac ran Apple's <code>mediastreamvalidator</code>: <b>zero MUST-fix</b> on the origin
-        and through CloudFront after six authoring fixes it demanded. Apple's own client reached the 8K rung
-        within 10&nbsp;s once hinted parts were delivered whole instead of streamed as produced — a part
-        served at production rate makes every client's throughput estimate read "the current rung", which
-        was the root cause of every "ABR never climbs" finding.</div></li>
+      <li><span class="d">Sep 13 '26</span><div class="t"><b>One delivery path, fewer machines.</b> Prism now
+        delivers only through its own origin. The code that pushed into AWS MediaPackage, its signing proxy
+        and a separate side path for audio are gone. The origin server powers down with the rest of the
+        fleet; a second viewer box that could only decode in software and a demo playout server that ran
+        around the clock were switched off. Between runs, only the console stays on.</div></li>
+      <li><span class="d">Sep 13 '26</span><div class="t"><b>DASH delay 9.4&nbsp;s → 3.7&nbsp;s, and the
+        player was not at fault.</b> The DASH manifest's clock was being stamped only after the packager
+        finished analysing its input, so the whole timeline ran <b>5.8&nbsp;s behind</b> reality — and the
+        player reported it was 3&nbsp;s from live while showing frames 9&nbsp;s old. The origin now sets that
+        clock from the segments themselves. Same viewer box, same manifest through the CDN: <b>3.7&nbsp;s</b>
+        from glass to glass at 4K, 60&nbsp;fps. Found on the way: the CDN cached any origin error for
+        10&nbsp;s by default, so one hiccup could freeze every viewer behind that edge — turned off.</div></li>
+      <li><span class="d">Sep 12 '26</span><div class="t"><b>Switched on in production, and Apple's tools
+        approve.</b> A full day of runs on the new origin: the automatic health check green at every
+        stage, both player modes compared, a <b>300&nbsp;Mbps</b> run with nothing refused, and a 15-minute
+        test with Apple's own tools on a rented Mac. Apple's stream validator passed with <b>no must-fix
+        items</b>, both direct and through the CDN, after six fixes it asked for. Apple's own player reached
+        the 8K rendition within 10&nbsp;s once the origin stopped trickling the newest chunk out as it was
+        produced. A chunk delivered at production speed makes every player believe the network is only as
+        fast as the current bitrate. That is why no player had ever stepped up to 8K on its own.</div></li>
       <li><span class="d">Sep 12 '26</span><div class="t"><b>Measured against MediaPackage — same day, same
-        probe.</b> Origin egress <b>1.0&nbsp;s</b> and CDN edge <b>1.08&nbsp;s</b> at 140&nbsp;Mbps, versus
-        2.5 / 2.6&nbsp;s through MediaPackage; <b>1.22 / 1.39&nbsp;s at 300&nbsp;Mbps</b> with no per-object
-        cap. Two 5.1 tracks kept 6/6 channel identity through origin and CDN. A probe fix on the way: the
-        part matcher had demanded one attribute order and silently fell back to whole segments — the lane
-        had read 2&nbsp;s worse than it was. Tuned defaults: 0.25&nbsp;s parts (0.4&nbsp;s better than
-        0.5&nbsp;s), 50&nbsp;ms SRT inside the VPC.</div></li>
-      <li><span class="d">Sep 12 '26</span><div class="t"><b>An 8K-capable real player.</b> Linux Chromium
-        has no HEVC decoder, so the player probe could only ever watch the 1080p rung. A Windows box with
-        an NVIDIA L40S and Chrome decodes <b>8K60 Main10 at 60&nbsp;fps</b> and now stands in for the viewer:
-        <b>5.7&nbsp;s</b> glass to glass locked to 8K, <b>3.6–3.8&nbsp;s</b> at 1080p/4K. The difference is
-        the player's 3&nbsp;s live-sync target plus hls.js's stall rule at 8K — decomposed and documented,
-        not a measurement fault.</div></li>
-      <li><span class="d">Sep 11 '26</span><div class="t"><b>A self-hosted low-latency origin.</b>
-        MediaPackage's limits were structural — a ~20&nbsp;MB per-object cap (a ~140&nbsp;Mbps ceiling),
-        <code>hev1</code> on its TS path (Safari refuses), an hls.js wedge at its live edge, ~1.4&nbsp;s of
-        opaque cost — so Prism packages on its own box now: one ffmpeg <code>-ldash</code> child per session
-        plus a small server that <b>holds blocking playlist reloads</b> and streams in-progress parts;
-        LL-HLS generated from the bytes on disk, LL-DASH from ffmpeg's manifest, patched; sessions splice
-        with a monotonic media sequence. Laptop end-to-end 44/44 on day one, estate built the next day.</div></li>
-      <li><span class="d">Aug 25 '26</span><div class="t"><b>"Partial" is not "failed".</b> Show night's
-        five-hour master — <b>313.5&nbsp;GB, every received byte preserved</b> — had been marked failed by a
-        storage-backpressure loud-fail. Records now distinguish <em>partial</em> (ended early, nothing lost)
-        from <em>failed</em>, and the recorder's spill cushion absorbs ~90&nbsp;s of object-storage slowdown
-        instead of 8.</div></li>
+        probes.</b> Delay at the origin's output <b>1.0&nbsp;s</b> and at the CDN edge <b>1.1&nbsp;s</b> at
+        140&nbsp;Mbps, versus 2.5 and 2.6&nbsp;s through MediaPackage. At <b>300&nbsp;Mbps: 1.2 and
+        1.4&nbsp;s</b>, with no upload size limit in the way. Two 5.1 surround tracks arrived with every
+        channel where it belongs. A probe bug fixed on the way had made the new path look 2&nbsp;s slower
+        than it was. New defaults: quarter-second chunks, which came in 0.4&nbsp;s faster than
+        half-second ones.</div></li>
+      <li><span class="d">Sep 12 '26</span><div class="t"><b>A viewer that can actually play 8K.</b> Linux
+        browsers cannot decode HEVC, so the old viewer box only ever watched the 1080p rendition. A Windows
+        machine with an NVIDIA L40S and Chrome decodes <b>8K at 60&nbsp;fps</b> and is now the reference
+        viewer: <b>5.7&nbsp;s</b> from glass to glass at 8K, <b>3.6–3.8&nbsp;s</b> at 1080p or 4K. The gap
+        is the player's 3-second safety buffer plus a rule in the web player that widens the buffer every
+        time 8K stalls — understood and documented, not a measurement error.</div></li>
+      <li><span class="d">Sep 11 '26</span><div class="t"><b>Our own low-latency origin.</b> MediaPackage's
+        limits were built in: a size cap per upload that held the feed to about 140&nbsp;Mbps, a codec label
+        Safari rejects, a web-player freeze at the live edge, and 1.4&nbsp;s of delay we could not see into.
+        Prism now packages on its own server. It cuts the stream into quarter-second chunks, answers a
+        player the instant a new chunk exists, and serves low-latency HLS and DASH from one set of files.
+        Sessions hand over cleanly. It passed 44 of 44 end-to-end checks on a laptop the first day; the
+        cloud machines were built the next.</div></li>
+      <li><span class="d">Aug 25 '26</span><div class="t"><b>"Partial" is not "failed".</b> The show's
+        five-hour recording — <b>313.5&nbsp;GB, every received byte intact</b> — had been labelled failed
+        because storage briefly pushed back. Recordings now say <em>partial</em> (ended early, nothing lost)
+        or <em>failed</em> (bytes actually lost), and the recorder rides out about 90&nbsp;s of storage
+        slowdown instead of 8.</div></li>
       <li><span class="d">Aug 23 '26</span><div class="t"><b>First production show.</b> An arena fight night:
-        <b>7h03m of continuous 8K60 transmission</b>, 447&nbsp;GB through the mux, the whole show recorded
-        straight to object storage, a venue power outage mid-day survived (the chain self-recovered in
-        ~20&nbsp;min while a UPS held the switcher), an optical-slate latency capture at show end. Four
-        hotfixes were cut live the same day. The field findings — the managed origin's PUT cap grazing 413s
-        at content peaks, hls.js wedging at its live edge — are what drove the self-hosted origin.</div></li>
-      <li><span class="d">Aug 19 '26</span><div class="t"><b>Second on-prem encode box.</b> A Blackwell-class
-        contributor provisioned by one script run: burn-in passed, engine and remote-control agent running,
-        joined the fleet as a contributor the console can start and stop.</div></li>
+        <b>7 hours 3 minutes of continuous 8K60 transmission</b>, 447&nbsp;GB through the cloud, the whole
+        show recorded, a venue power cut survived mid-day (the chain recovered itself in about 20 minutes
+        while a UPS held the switcher), and a lens-to-screen delay reading at the end. Four fixes were
+        released during the day. What the field taught — the upload cap grazing its limit at busy moments,
+        the web player freezing at MediaPackage's live edge — is what led to the self-hosted origin.</div></li>
+      <li><span class="d">Aug 19 '26</span><div class="t"><b>A second on-site encoder.</b> A Blackwell-class
+        machine set up by one script, burn-in passed, joined the fleet as a contributor the console can
+        start and stop remotely.</div></li>
       <li><span class="d">Aug 12 '26</span><div class="t"><b>Accounts and partner access.</b> Sign-in is a
-        page in the console and the account is the email; three roles are enforced deny-by-default on every
-        API route — <b>partner</b> (read-only + the confidence monitor), <b>operator</b>, <b>admin</b> —
-        with self-service password reset. Partners get one button, <b>Run standard test</b>, that starts the
-        rig's standard campaign from a preset admins maintain. Live ops now raises a loud alert when a
-        contribution arrives at full bitrate but the mux emits nothing.</div></li>
-      <li><span class="d">Aug 6 '26</span><div class="t"><b>Player overhaul.</b> The confidence monitor
-        rebuilt around the stream and a six-cell status strip; a run-context chip says what the rig is doing;
-        every number declares its provenance; an idle endpoint <b>parks</b> to black instead of replaying
-        stale segments as if live. A player-verify gate proves it against real streams. Also: multi-GB
-        recordings download to completion, and the ingest rail recovers in 7&nbsp;s instead of 120.</div></li>
+        page in the console and the account is the email address. Three roles apply to every action —
+        <b>partner</b> (read-only, plus the monitor), <b>operator</b>, <b>admin</b> — and passwords reset by
+        email. Partners get one button, <b>Run standard test</b>, which starts the standard campaign from a
+        preset the admins maintain. The live view now raises an alarm when a feed arrives at full rate but
+        nothing comes out the other side.</div></li>
+      <li><span class="d">Aug 6 '26</span><div class="t"><b>Player overhaul.</b> The confidence monitor was
+        rebuilt around the picture and a six-cell status strip; a chip says what the rig is doing right now;
+        every number says where it comes from; an idle endpoint <b>parks</b> on black instead of replaying old
+        segments as if they were live. Also: large recordings now download to the end, and the contribution
+        receiver recovers in 7&nbsp;s instead of two minutes.</div></li>
       <li><span class="d">Aug 5 '26</span><div class="t"><b>Stress-tested at the ceiling.</b> Worst-case
         grain content, 8K59.94 HEVC at <b>140&nbsp;Mbps</b>, through the contribution rail: 10.7&nbsp;GB in a
-        638&nbsp;s session with <b>zero drops</b> and the encoder at half its NVENC capacity. Packager
-        segments ran 17.8&nbsp;MB — under the origin's cap with margin — and back-to-back sessions re-entered
-        cleanly in seconds. Release <b>v2026.8.11</b> cut the same night.</div></li>
+        638&nbsp;s session with <b>zero drops</b> and the encoder at half its hardware capacity. Packaged
+        segments ran 17.8&nbsp;MB — under the managed origin's upload cap with margin — and back-to-back
+        sessions re-entered cleanly in seconds. Release <b>v2026.8.11</b> cut the same night.</div></li>
       <li><span class="d">Aug 5 '26</span><div class="t"><b>59.94 is now exact, end to end.</b> Fractional
         (NTSC) rates ride as true rationals, segment durations snap to whole keyframe groups
         (a 2&nbsp;s target becomes exactly 2.002&nbsp;s), and manifests declare <b>actual</b> segment
@@ -313,7 +312,7 @@
         delivery numbers got honest.</b> The real-player (post-decode) probe now runs on a dedicated
         instance, after measurement was caught starving the packager it measured. With the load moved,
         the managed origin's real cost is <b>~1.4&nbsp;s</b> — the earlier ~7.7&nbsp;s figure was the
-        starved box, and it is retracted. Best full-run medians now: encode 0.67&nbsp;s, packager egress
+        starved box, and it is retracted. Best full-run medians then: encode 0.67&nbsp;s, packager output
         2.4&nbsp;s, real player ≈6&nbsp;s.</div></li>
       <li><span class="d">Aug 3 '26</span><div class="t"><b>A real camera, live, measured from the
         lens.</b> An 8K cinema camera fed the chain over quad-link SDI on the on-prem contributor:
@@ -338,31 +337,31 @@
         listener kill producing correct drop windows; first real-network run is next fleet session.</div></li>
       <li><span class="d">Jul 28 '26</span><div class="t"><b>The console grew up.</b> One monolithic page
         became a <b>seven-view operator console</b> — Home, Test lab (a five-step builder generated from
-        declarative field tables with a self-testing parity check), Live ops (SLO strip, egress-surface
-        health, event log, rolling quality), Audio, a typed <b>Reports</b> system (campaigns, comparisons,
-        channel-check records, egress captures — one renderer per kind), Fleet, and the Confidence monitor.
+        declarative field tables with a self-testing parity check), Live ops (targets strip, the health of
+        every delivery surface, event log, rolling quality), Audio, a typed <b>Reports</b> system (campaigns, comparisons,
+        channel-check records, delivery snapshots — one renderer per kind), Fleet, and the Confidence monitor.
         Built agent-first: an executable GUI spec gates every merge.</div></li>
       <li><span class="d">Jul 23 '26</span><div class="t"><b>Audio is latency-invisible — proven.</b>
         Back-to-back fleet runs, video-only vs. 8K60 + 16 channels of AAC: every stage moved ≤~3%
         (T1&nbsp;+39&nbsp;ms … T5&nbsp;+143&nbsp;ms). Two 7.1 tracks flowed through the whole chain — SRT
-        contribution, packager, all four egress surfaces — with zero mux restarts.</div></li>
+        contribution, packager, all four delivery surfaces — with zero receiver restarts.</div></li>
       <li><span class="d">Jul 20 '26</span><div class="t"><b>Multichannel audio, instrumented like the
         video.</b> Up to <b>32 channels</b> (4×7.1 AAC tracks), each channel carrying a unique fingerprint
-        tone so channel identity is <b>verified, not assumed</b> — 32/32 FFT-confirmed through a real NVENC
-        encode. A live <b>channel-check board</b> solos any channel at the source mid-run (no restart) and
+        tone so channel identity is <b>verified, not assumed</b> — 32 of 32 confirmed by frequency analysis
+        through a real hardware encode. A live <b>channel-check board</b> solos any channel at the source mid-run (no restart) and
         writes an auditable line-check record with auto-verdicts — the classic broadcast fax check, with
         proof.</div></li>
       <li><span class="d">Jul 8 '26</span><div class="t"><b>Global delivery, measured per region.</b>
         CloudFront now fronts the managed origin (with cryptographically signed origin access), and probe
         boxes in Virginia and Frankfurt read the QR straight off their local edges: the home-region edge
-        sits ≈0.2&nbsp;s behind the packager egress, Virginia ≈+0.9&nbsp;s, Frankfurt ≈+1.8&nbsp;s — real
+        sits ≈0.2&nbsp;s behind the packager's output, Virginia ≈+0.9&nbsp;s, Frankfurt ≈+1.8&nbsp;s — real
         geographic propagation, not an estimate.</div></li>
       <li><span class="d">Jul 8 '26</span><div class="t"><b>Seven stages: the packager gets its own hop.</b>
-        The chain is now T0→T6 — packaging (T3), MediaPackage egress (T4), CDN edges (T5), player (T6) are
-        separate readings, so the packager's cost (~0.9&nbsp;s) and each region's CDN cost are individually
-        visible instead of blended.</div></li>
+        The chain is now T0→T6 — the receiver (T3), the packager's output (T4), the CDN edges (T5) and the
+        player (T6) are separate readings, so the packager's cost (~0.9&nbsp;s then) and each region's CDN
+        cost are individually visible instead of blended.</div></li>
       <li><span class="d">Jul 8 '26</span><div class="t"><b>The instrument audits itself — and caught its
-        first bug.</b> A one-click health check runs a 90&nbsp;s canary and asserts every probe reported and
+        first bug.</b> A one-click health check runs a 90&nbsp;s test stream and confirms every probe reported and
         every stage measured. Its very first run exposed a probe decode bottleneck whose fix rewrote the
         story: encode and SRT transit are <b>sub-second</b> (≈0.46&nbsp;s and ≈0.71&nbsp;s) — the earlier
         multi-second readings were the probe's own lag. Packaging, not encoding, dominates the budget.</div></li>
@@ -373,16 +372,17 @@
       <li><span class="d">Jul 7 '26</span><div class="t"><b>Prism Console.</b> The control plane moved to a
         dedicated always-on instance: TLS with per-user logins, fleet start/stop from the browser, and
         campaigns relayed to the GPU encoder — operators never need shell access.</div></li>
-      <li><span class="d">Jul 7 '26</span><div class="t"><b>Prism Player.</b> A hosted playback probe that
-        plays any endpoint (HLS, LL-HLS, or DASH), decodes the QR for true glass-to-glass, exposes buffer /
-        ABR / segment telemetry, and feeds T5 into the pipeline graph.</div></li>
+      <li><span class="d">Jul 7 '26</span><div class="t"><b>Prism Player.</b> A hosted player that plays
+        any endpoint (HLS, low-latency HLS, or DASH), reads the QR code off the picture for true
+        glass-to-glass delay, shows its buffer, bitrate and segment telemetry, and feeds the player stage
+        into the pipeline graph.</div></li>
       <li><span class="d">Jul 7 '26</span><div class="t"><b>Viewing ladder.</b> Delivery now carries two
         variants: the bit-exact 8K HEVC measured product plus a universal 1080p H.264 preview transcoded
-        once on the mux GPU — any laptop can watch, and viewers can lock either variant in the player.</div></li>
+        once on the receiver's GPU — any laptop can watch, and viewers can lock either variant in the player.</div></li>
       <li><span class="d">Jul 7 '26</span><div class="t"><b>Managed origin validated.</b> The pipeline
-        ingests into AWS MediaPackage v2 without MediaLive (a SigV4 signing proxy keeps Prism's encoder in
-        the path), the QR survives re-packaging, and one chunk set serves HLS, LL-HLS with real partial
-        segments (~4.7&nbsp;s fresh), and DASH.</div></li>
+        ingests into AWS MediaPackage v2 without a MediaLive channel in front (a small signing proxy keeps
+        Prism's encoder in the path), the QR code survives re-packaging, and one set of chunks serves HLS,
+        low-latency HLS with real partial segments (~4.7&nbsp;s fresh), and DASH.</div></li>
       <li><span class="d">Jul 6 '26</span><div class="t"><b>Correlation gate closed.</b> Known-delay
         injection now passes in both directions (encode +471&nbsp;ms, SRT +523&nbsp;ms, each rising alone) —
         the check that makes every latency number trustworthy.</div></li>
@@ -391,130 +391,132 @@
 
   <section aria-labelledby="model-h">
     <p class="eyebrow">The measurement model</p>
-    <h2 id="model-h">One timecode, followed from the lens to the screen</h2>
-    <p class="section-note">Every frame carries a QR timecode stamped with its emission epoch. Latency at any
-      point is simply that frame's own age when it is seen there — no cross-clock arithmetic, no assumptions.
-      With a real camera there are two references, kept separate on purpose: <b>pipeline latency</b> (T0→T6,
-      from the encoder's stamp) and <b>glass-to-glass</b> (acquisition + pipeline, from the scene itself). The
-      acquisition stage exists because of the <b>camera slate page</b> — a full-screen QR clock (with
-      stamp-hold and sync bands) that any display can show and any camera can film, putting real-world time
-      onto the glass itself.</p>
+    <h2 id="model-h">One timestamp, followed from the lens to the screen</h2>
+    <p class="section-note">Every frame carries a small QR code holding the moment it was created. Wherever a
+      probe sees that frame, the delay is simply how old the frame is — no clock arithmetic between
+      machines, no guessing. With a real camera there are two starting points, kept apart on purpose:
+      <b>pipeline delay</b> counts from the encoder's stamp (T0→T6); <b>glass to glass</b> counts from the
+      scene itself, read off a clock displayed on set that the camera films — the <b>camera slate page</b>,
+      a full-screen QR clock any display can show.</p>
 
     <div class="rail-scroll">
       <div class="rail">
         <div class="stage measured"><div class="node">
-          <span class="tid">ACQ</span><div class="sname">Acquisition</div>
-          <p class="sdesc">Lens→capture: the filmed slate's clock vs the encoder's stamp, in the same frame.</p><span class="method precise">Differential</span>
+          <span class="tid">ACQ</span><div class="sname">Camera</div>
+          <p class="sdesc">Lens to capture: the filmed clock against the encoder's stamp, in the same frame.</p><span class="method precise">Differential</span>
         </div></div>
         <div class="stage measured"><div class="node">
-          <span class="tid">T0</span><div class="sname">Origin</div>
-          <p class="sdesc">Timecode stamped into the frame.</p><span class="method exact">Known exactly</span>
+          <span class="tid">T0</span><div class="sname">Source</div>
+          <p class="sdesc">The timestamp is stamped into the frame.</p><span class="method exact">Known exactly</span>
         </div></div>
         <div class="stage measured"><div class="node">
           <span class="tid">T1</span><div class="sname">Encode</div>
-          <p class="sdesc">Frame leaves the encoder.</p><span class="method precise">Precise</span>
+          <p class="sdesc">The frame leaves the encoder.</p><span class="method precise">Precise</span>
         </div></div>
         <div class="stage measured"><div class="node">
-          <span class="tid">T2</span><div class="sname">SRT transit</div>
-          <p class="sdesc">Frame lands after the SRT hop.</p><span class="method precise">Precise</span>
+          <span class="tid">T2</span><div class="sname">Contribution</div>
+          <p class="sdesc">The frame lands in the cloud after the SRT hop.</p><span class="method precise">Precise</span>
         </div></div>
         <div class="stage measured"><div class="node">
-          <span class="tid">T3</span><div class="sname">Origin segment</div>
-          <p class="sdesc">Freshest frame the origin serves.</p><span class="method freshness">Freshness</span>
+          <span class="tid">T3</span><div class="sname">Received</div>
+          <p class="sdesc">Newest frame in the receiver's first packaged output.</p><span class="method freshness">Freshness</span>
         </div></div>
         <div class="stage measured"><div class="node">
-          <span class="tid">T4</span><div class="sname">Origin egress</div>
-          <p class="sdesc">Prism's own low-latency origin — what feeds the CDN, read per 0.25 s part.</p><span class="method freshness">Freshness · parts</span>
+          <span class="tid">T4</span><div class="sname">Origin</div>
+          <p class="sdesc">Newest chunk Prism's origin serves — what the CDN pulls.</p><span class="method freshness">Freshness · ¼ s chunks</span>
         </div></div>
         <div class="stage measured"><div class="node">
           <span class="tid">T5</span><div class="sname">CDN edge</div>
-          <p class="sdesc">CloudFront PoPs, one probe per region, read per part.</p><span class="method freshness">Freshness · parts</span>
+          <p class="sdesc">Newest chunk at a CloudFront edge, one probe per region.</p><span class="method freshness">Freshness · ¼ s chunks</span>
         </div></div>
         <div class="stage measured"><div class="node">
-          <span class="tid">T6</span><div class="sname">Player</div>
-          <p class="sdesc">A real browser decodes the QR off the rendered frame.</p><span class="method freshness">Post-decode</span>
+          <span class="tid">T6</span><div class="sname">Viewer</div>
+          <p class="sdesc">A real browser, the QR read off the rendered picture.</p><span class="method freshness">Post-decode</span>
         </div></div>
       </div>
     </div>
-    <p class="rail-caption"><b>Precise</b> stages catch the exact frame (frame-level age); <b>freshness</b>
-      stages read the newest served frame. <b>Acquisition</b> is deliberately not a T-stage: it is a
-      same-frame differential — a frame that shows the filmed slate AND carries the encoder's stamp yields
-      camera→capture time with the observer's clock cancelled out — and it carries its own error sources
-      (display lag, exposure, slate↔encoder clock agreement), stated in every report. Measured on the real
-      camera days: latency numbers are <b>lens-referenced off the glass</b>, not just encoder-referenced. A
-      warm-up window keeps pipeline spin-up out of the numbers, and every run resets to zero, so results
-      reflect steady state — not the first noisy seconds.</p>
+    <p class="rail-caption"><b>Precise</b> stages catch each frame and measure its own age; <b>freshness</b>
+      stages fetch whatever is newest at that point and measure how old it is. The <b>camera</b> stage is
+      kept separate from the T-stages on purpose: a single frame that shows the filmed clock <em>and</em>
+      carries the encoder's stamp gives lens-to-capture time with the observer's clock cancelled out, but it
+      has its own error sources (display lag, exposure, how well the two clocks agree), and every report
+      states them. Every run discards its warm-up and starts its counters from zero, so the numbers are
+      steady-state, not the first noisy seconds.</p>
   </section>
 
   <section aria-labelledby="does-h">
     <p class="eyebrow">Capabilities</p>
     <h2 id="does-h">What it does</h2>
-    <p class="section-note">The whole chain in one platform — origination or real-camera contribution
-      through playback, with the instrumentation an ordinary encoder can't provide.</p>
+    <p class="section-note">The whole chain in one platform — from a test source or a real camera to the
+      viewer's screen — with the measurement an ordinary encoder cannot give you.</p>
 
     <div class="grid">
       <div class="card"><p class="label">Originate</p><h3>Generate the source — or film it</h3>
-        <p>A test pattern, a pre-rendered file, the <b>instrumented QR-timecode</b> source — or a real camera
-          filming the <b>slate page</b>, a full-screen QR clock that puts scene time on the glass. Any
+        <p>A test pattern, a pre-rendered file, the <b>timestamped QR</b> test source — or a real camera
+          filming the <b>slate page</b>, a full-screen clock that puts scene time on the glass. Any
           resolution up to <b>8K</b>.</p></div>
       <div class="card"><p class="label">Encode</p><h3>Hardware or software</h3>
-        <p>NVENC <b>H.264 / HEVC / AV1</b> or libx264/libx265, with presets, rate control, and <b>split-frame
-          encoding</b> across multiple NVENC engines for 8K. Never falls back to CPU silently.</p></div>
-      <div class="card"><p class="label">Deliver</p><h3>CMAF, SRT, origin, CDN</h3>
-        <p>CMAF (<b>HLS + DASH</b>) to disk, an <b>SRT contribution</b>, and Prism's own <b>low-latency
-          origin</b> — LL-HLS with real blocking reloads and 0.25&nbsp;s parts plus LL-DASH from one CMAF
-          chunk set, a <b>four-rung ladder</b> (bit-exact 8K HEVC, 4K HEVC, 1080p + 720p H.264) with up to
-          <b>4×7.1 audio</b>, Apple-conformant — with <b>CloudFront</b> in front.</p></div>
-      <div class="card"><p class="label">Measure</p><h3>Per-frame latency</h3>
-        <p>QR-timecode latency across <b>T0→T6</b> — precise where the exact frame can be caught, freshness
-          where only the newest segment is visible — plus the <b>acquisition differential</b> when a camera
-          films the slate, so glass-to-glass is measured from the scene, never inferred.</p></div>
+        <p>NVIDIA hardware encoding in <b>H.264, HEVC or AV1</b>, or software encoders, with presets, rate
+          control, and <b>split-frame encoding</b> across several hardware engines for 8K. Never falls back
+          to software silently.</p></div>
+      <div class="card"><p class="label">Deliver</p><h3>Contribution, origin, CDN</h3>
+        <p>Standard HLS and DASH files to disk, a live <b>SRT contribution</b> (the broadcast-grade transport),
+          and Prism's own <b>low-latency origin</b> with <b>CloudFront</b> in front. The origin serves
+          low-latency HLS and DASH from one set of quarter-second chunks: <b>four renditions</b> (8K HEVC
+          untouched, 4K HEVC, 1080p and 720p H.264) and up to <b>four 7.1 audio tracks</b>, validated with
+          Apple's tools.</p></div>
+      <div class="card"><p class="label">Measure</p><h3>Delay at every stage</h3>
+        <p>The frame's own age across <b>T0→T6</b> — exact where the frame itself can be caught, newest-chunk
+          where a server is polled — plus the <b>camera stage</b> when a camera films the slate, so
+          glass-to-glass delay is measured from the scene, never inferred.</p></div>
       <div class="card"><p class="label">Span continents</p><h3>Distributed probes</h3>
-        <p>Passive probes on separate instances — including <b>CDN-edge boxes on the US East Coast and in
-          Europe</b> — measure real cross-network hops with clock-synced one-way timing.</p></div>
+        <p>Passive probes on separate machines — including <b>CDN-edge boxes on the US East Coast and in
+          Europe</b> — measure real cross-network hops, with clocks synchronised so one-way times are
+          trustworthy.</p></div>
       <div class="card"><p class="label">Operate &amp; observe</p><h3>Console + monitor + self-check</h3>
-        <p>An always-on <b>seven-view console</b> (fleet control, live ops with egress-surface health and
-          event log, five-step test builder, typed <b>Reports</b> with two-run diffing), the hosted
-          <b>Confidence monitor</b> with per-channel audio meters, and a one-click <b>instrument health
-          check</b>. Every run writes a diffable report; quality is scored per run with <b>VMAF&nbsp;v1 +
-          CAMBI</b> at the one lossy boundary.</p></div>
+        <p>An always-on <b>seven-view console</b> (fleet control, live operations with the health of every
+          delivery surface and an event log, a five-step test builder, <b>reports</b> you can compare two at a
+          time), the hosted <b>confidence monitor</b> with per-channel audio meters, and a one-click
+          <b>instrument health check</b>. Every run writes a report; picture quality is scored per run with
+          <b>VMAF and CAMBI</b> at the one place pixels change.</p></div>
     </div>
   </section>
 
   <section aria-labelledby="test-h">
     <p class="eyebrow">What you put it to</p>
     <h2 id="test-h">What it lets you test</h2>
-    <p class="section-note">The questions a delivery pipeline actually raises — answered on real hardware
-      and a real network, with numbers you can trust and compare.</p>
+    <p class="section-note">The questions a delivery chain actually raises — answered on real hardware and a
+      real network, with numbers you can trust and compare.</p>
 
     <div class="grid">
       <div class="card"><p class="label">Throughput</p><h3>Real-time headroom</h3>
-        <p>Can this GPU hold <b>1× (or N×)</b> at a given resolution, frame rate, codec, and preset? Live
-          speed, fps, and drop telemetry answer it on the actual instance — e.g. <b>8K60 HEVC at 1.0×</b>.</p></div>
-      <div class="card"><p class="label">End to end</p><h3>Glass-to-glass latency</h3>
-        <p>The true source→viewer delay, with a <b>per-stage breakdown</b> — encode vs. SRT vs. packaging vs.
-          delivery vs. player — so you can see <em>which</em> latency dominates.</p></div>
-      <div class="card"><p class="label">Across the wire</p><h3>Cross-machine latency</h3>
-        <p>Measure a genuine SRT contribution <b>between instances</b>, over the real network, with the
-          one-way timing that only synchronized clocks make honest.</p></div>
-      <div class="card"><p class="label">Trade-offs</p><h3>Codec &amp; config A/B</h3>
-        <p>Sweep any mix of <b>codec, preset, resolution, frame rate, segment duration, and bitrate</b>; every
-          report embeds its configuration and diffs directly against another.</p></div>
-      <div class="card"><p class="label">Integrity</p><h3>Timecode survivability</h3>
-        <p>Confirm the QR <b>survives the encode</b> at a given bitrate and resolution before trusting any
+        <p>Can this GPU keep up <b>in real time (or faster)</b> at a given resolution, frame rate, codec and
+          preset? Live speed, frame rate and dropped-frame counts answer it on the actual machine — for
+          example <b>8K60 HEVC at 1.0×</b>.</p></div>
+      <div class="card"><p class="label">End to end</p><h3>Glass-to-glass delay</h3>
+        <p>The true source-to-viewer delay with a <b>breakdown per stage</b> — encoding, contribution,
+          packaging, delivery, player — so you can see <em>which</em> one dominates.</p></div>
+      <div class="card"><p class="label">Across the wire</p><h3>Machine-to-machine delay</h3>
+        <p>Measure a genuine SRT contribution <b>between machines</b> over the real network, with the one-way
+          timing that only synchronised clocks make honest.</p></div>
+      <div class="card"><p class="label">Trade-offs</p><h3>Codec and settings, side by side</h3>
+        <p>Sweep any mix of <b>codec, preset, resolution, frame rate, segment length and bitrate</b>; every
+          report embeds its settings and compares directly against another.</p></div>
+      <div class="card"><p class="label">Integrity</p><h3>Does the timestamp survive?</h3>
+        <p>Confirm the QR code <b>survives encoding</b> at a given bitrate and resolution before trusting any
           number — a pass/fail gate, not a guess.</p></div>
       <div class="card"><p class="label">Integrity</p><h3>Known-delay calibration</h3>
-        <p>Inject a measured delay at one stage and confirm that <b>only that stage moves</b> — the correlation
-          check that makes the whole chain believable.</p></div>
+        <p>Add a known delay at one stage and confirm that <b>only that stage moves</b> — the check that makes
+          the whole chain believable.</p></div>
     </div>
   </section>
 
   <section aria-labelledby="live-h">
     <p class="eyebrow">Seen live</p>
     <h2 id="live-h">The pipeline graph, mid-run</h2>
-    <p class="section-note">The console's live T0→T6 graph during a distributed 8K campaign — the encoder's
-      local tap, the mux probes, the origin's egress, the CDN-edge probe and the real player drawn as one
-      chain, each node showing its cumulative age from origin and its decode health.</p>
+    <p class="section-note">The console's live T0→T6 graph during an 8K run across the fleet — the encoder,
+      the receiver, the origin, the CDN edge and the real viewer drawn as one chain, each node showing how
+      old the picture is by the time it gets there and how many frames it read.</p>
 
     <div class="livegraph">
       <div class="lg-head">Pipeline T0→T6 — live graph</div>
@@ -524,67 +526,70 @@
           <div class="gedge"><span class="elabel">encode</span><span class="eline"></span></div>
           <div class="gnode"><div class="gnid">enc-t1</div><div class="gmeta">encode · T1</div><div class="gms">903 ms</div><div class="gdec">1178 frames ok</div></div>
           <div class="gedge"><span class="elabel">SRT</span><span class="eline"></span></div>
-          <div class="gnode"><div class="gnid">mux-t2</div><div class="gmeta">SRT · T2</div><div class="gms">1420 ms</div><div class="gdec">1175 frames ok</div></div>
-          <div class="gedge"><span class="elabel">origin</span><span class="eline"></span></div>
-          <div class="gnode"><div class="gnid">mux-1</div><div class="gmeta">mux · T3</div><div class="gms">780 ms</div><div class="gdec">1106 frames ok</div></div>
-          <div class="gedge"><span class="elabel">egress</span><span class="eline"></span></div>
-          <div class="gnode"><div class="gnid">origin-t4</div><div class="gmeta">origin · T4</div><div class="gms">982 ms</div><div class="gdec">74 parts ok</div></div>
+          <div class="gnode"><div class="gnid">mux-t2</div><div class="gmeta">contribution · T2</div><div class="gms">1420 ms</div><div class="gdec">1175 frames ok</div></div>
+          <div class="gedge"><span class="elabel">receive</span><span class="eline"></span></div>
+          <div class="gnode"><div class="gnid">mux-1</div><div class="gmeta">received · T3</div><div class="gms">780 ms</div><div class="gdec">1106 frames ok</div></div>
+          <div class="gedge"><span class="elabel">package</span><span class="eline"></span></div>
+          <div class="gnode"><div class="gnid">origin-t4</div><div class="gmeta">origin · T4</div><div class="gms">982 ms</div><div class="gdec">74 chunks ok</div></div>
           <div class="gedge"><span class="elabel">CDN</span><span class="eline"></span></div>
-          <div class="gnode"><div class="gnid">cdn-usw2</div><div class="gmeta">CDN · T5</div><div class="gms">1059 ms</div><div class="gdec">90 parts ok</div></div>
-          <div class="gedge"><span class="elabel">player</span><span class="eline"></span></div>
-          <div class="gnode"><div class="gnid">player-t6gpu</div><div class="gmeta">4K LL-DASH · T6</div><div class="gms">3705 ms</div><div class="gdec">843 frames ok</div></div>
+          <div class="gnode"><div class="gnid">cdn-usw2</div><div class="gmeta">CDN edge · T5</div><div class="gms">1059 ms</div><div class="gdec">90 chunks ok</div></div>
+          <div class="gedge"><span class="elabel">viewer</span><span class="eline"></span></div>
+          <div class="gnode"><div class="gnid">player-t6gpu</div><div class="gmeta">viewer, 4K DASH · T6</div><div class="gms">3705 ms</div><div class="gdec">843 frames ok</div></div>
         </div>
       </div>
     </div>
-    <p class="rail-caption">Ages are cumulative from T0, from an 8K60 fleet run on 2026-09-13 (140&nbsp;Mbps,
-      two 5.1 tracks). Encode and SRT are frame-catch medians; the mux (T3) is a freshness reading of the
-      newest served segment, so it can sit below the SRT median — different methods, both labeled. The
-      origin's egress (T4) and the CDN edge (T5) are read <b>per 0.25&nbsp;s part</b>, one frame per part,
-      which is why their counts are lower. T6 is the <b>real player</b>: fetch through the CDN, buffer,
-      hardware decode, render — everything a viewer experiences, read off the rendered frame; here the 8K-capable
-      box on the LL-DASH manifest at 4K. At T5 the chain fans out per region: US East reads level with the
-      home edge and Frankfurt ≈+0.15&nbsp;s (2026-09-12).</p>
+    <p class="rail-caption">Every figure is the picture's age at that point, from an 8K60 run on 2026-09-13
+      (140&nbsp;Mbps, two 5.1 tracks). Encode and contribution catch each frame; the receiver (T3) reads the
+      newest segment it has packaged, so it can sit below the contribution figure — different methods, both
+      labelled. The origin (T4) and the CDN edge (T5) are read <b>per quarter-second chunk</b>, one frame per
+      chunk, which is why their counts are lower. T6 is the <b>real viewer</b>: fetch through the CDN,
+      buffer, hardware decode, render — everything a viewer experiences, read off the rendered picture; here
+      the 8K-capable box watching the DASH stream at 4K. At the edge the chain fans out per region: US East
+      reads level with the home edge, Frankfurt about 0.15&nbsp;s behind it (2026-09-12).</p>
   </section>
 
   <section aria-labelledby="rig-h">
     <p class="eyebrow">The rig</p>
     <h2 id="rig-h">Hardware &amp; cloud</h2>
-    <p class="section-note">The validated results run on AWS EC2 — a small fleet spanning three regions —
-      but nothing here is AWS-specific.</p>
+    <p class="section-note">The validated results run on AWS — a small fleet across three regions — but
+      nothing here depends on AWS.</p>
 
     <div class="grid">
       <div class="card"><p class="label">Encoder</p><h3>NVIDIA L40S · g6e</h3>
-        <p>Three NVENC engines drive the <b>split-frame 8K60</b> encode; runs the headless campaign engine
-          the console relays to.</p></div>
-      <div class="card"><p class="label">Mux + ladder</p><h3>NVIDIA L4 · g6</h3>
-        <p>Receives the SRT contribution, packages <b>CMAF / HLS</b> for the local T3 reading, builds the
-          <b>four-rung GPU ladder</b> and sends it as one transport stream over SRT to the origin — without
-          ever touching the encoder's pace.</p></div>
-      <div class="card"><p class="label">Origin</p><h3>LL origin · m6i</h3>
-        <p>A CPU box running Prism's own packager and LL-HLS / LL-DASH server: the segment window lives in
-          RAM, sessions splice cleanly, and it powers on and off <b>with the fleet</b>. CloudFront pulls from
-          it.</p></div>
+        <p>Three hardware encoding engines share the <b>8K60 picture</b> between them; the machine also runs
+          the campaign engine the console drives.</p></div>
+      <div class="card"><p class="label">Receiver</p><h3>NVIDIA L4 · g6</h3>
+        <p>Receives the contribution, packages it once for the local T3 reading, builds the
+          <b>four renditions</b> on its GPU and sends them as one stream to the origin — without ever
+          slowing the encoder.</p></div>
+      <div class="card"><p class="label">Origin</p><h3>Low-latency origin · m6i</h3>
+        <p>A CPU-only machine running Prism's own packager and low-latency HLS / DASH server: the live window
+          lives in memory, sessions hand over cleanly, and it powers on and off <b>with the fleet</b>.
+          CloudFront pulls from it.</p></div>
       <div class="card"><p class="label">Control plane</p><h3>Console · t3.small</h3>
-        <p>Always on — the only box that is: TLS + per-user auth, the pipeline graph, <b>fleet start/stop</b>,
-          campaign relay, the hosted player, and the instrument health check. Survives fleet power-cycling.</p></div>
-      <div class="card"><p class="label">Real player</p><h3>Windows + L40S · g6e</h3>
-        <p>Chrome with hardware HEVC Main10 decode — the only way to watch the <b>8K rung</b> in a browser
-          (Linux Chromium has no HEVC). It reads the QR off its rendered frame and reports T6.</p></div>
+        <p>Always on — the only machine that is: sign-in and roles, the pipeline graph, <b>fleet
+          start/stop</b>, campaign control, the hosted player, and the instrument health check. Survives the
+          fleet powering down.</p></div>
+      <div class="card"><p class="label">Reference viewer</p><h3>Windows + L40S · g6e</h3>
+        <p>Chrome with hardware HEVC decoding — the only way to watch the <b>8K rendition</b> in a browser
+          (Linux browsers cannot decode HEVC). It reads the QR code off its own rendered picture and
+          reports T6.</p></div>
       <div class="card"><p class="label">CDN edges</p><h3>Probe boxes · 2 continents</h3>
-        <p>Small CPU instances in <b>us-east-1 and eu-central-1</b> decode the QR straight off their local
-          CloudFront edge. They power on and off <b>with the fleet</b> — zero standby cost between runs.</p></div>
+        <p>Small machines in <b>Virginia and Frankfurt</b> read the QR code straight off their local
+          CloudFront edge. They power on and off <b>with the fleet</b> — no standby cost between runs.</p></div>
       <div class="card"><p class="label">AWS glue</p><h3>Time Sync · CloudFront</h3>
-        <p>The <b>Amazon Time Sync Service</b> keeps chrony µs-accurate (what makes cross-machine timing
-          honest); <b>CloudFront</b> fronts the origin — HTTP/2 only (Apple's validator objects to HTTP/3 on
-          the master), error caching off for the live edge. No managed packager anywhere.</p></div>
+        <p>The <b>Amazon Time Sync Service</b> keeps every machine's clock within microseconds (what makes
+          cross-machine timing honest); <b>CloudFront</b> fronts the origin over HTTP/2 only (Apple's
+          validator flags HTTP/3), with error caching off so one hiccup never freezes viewers for
+          10&nbsp;s. No managed packager anywhere.</p></div>
     </div>
 
     <div class="callout">
       <p class="k">Not AWS-locked</p>
-      <p>Prism is <b>Python + FFmpeg + NVENC/NVDEC</b>, so it runs on any Linux GPU host, and its origin is its
-        own process — no managed packager to substitute. The AWS pieces map straight across: EC2 GPU
-        instances → GCP A3/G2 or Azure NV/NC series; the Time Sync Service → any chrony/PTP/NTP source;
-        security groups → the platform's firewall controls; CloudFront → any CDN that honours the origin's
+      <p>Prism is <b>Python + FFmpeg + NVIDIA encode/decode</b>, so it runs on any Linux GPU host, and its
+        origin is its own program — nothing managed to substitute. The AWS pieces map straight across: EC2
+        GPU instances → GCP A3/G2 or Azure NV/NC series; the Time Sync Service → any chrony, PTP or NTP
+        source; security groups → the platform's firewall; CloudFront → any CDN that honours the origin's
         cache headers. Same rig, different cloud.</p>
     </div>
   </section>
@@ -593,98 +598,99 @@
     <p class="eyebrow">Where it stands</p>
     <h2 id="status-h">Validated so far — and what's left</h2>
     <p class="section-note">The chain is proven end to end at 8K — from a real camera, through Prism's own
-      low-latency origin, to a real 8K-capable player, and through a seven-hour production show. What remains
-      extends audio width, endurance, and resilience — none of it blocks the numbers that already work.</p>
+      low-latency origin, to a real 8K-capable viewer, and through a seven-hour production show. What remains
+      is about wider audio, endurance and resilience — none of it blocks the numbers that already work.</p>
 
     <div class="status-grid">
       <div class="status-col done">
         <div class="status-head"><h3>Validated</h3><span class="count">25 confirmed</span></div>
         <p class="sub">Demonstrated on real hardware, with pass/fail gates where it counts.</p>
         <ul class="status-list">
-          <li><b>Timecode survivability</b> 600 / 600 frames (100%) decoded through 8K HEVC NVENC — the QR carrier survives the encode.</li>
-          <li><b>Correlation integrity</b> a known +500&nbsp;ms delay injected at the encode and SRT stages rose alone (+471&nbsp;ms and +523&nbsp;ms respectively), with no other stage affected. The injection gate is fully closed.</li>
-          <li><b>Encode holds real time</b> 8K60 HEVC NVENC, split-frame across three engines — sustained 1.0× with zero dropped frames.</li>
-          <li><b>Distributed chain, correctly ordered</b> across two machines and true to the frame:
-            <b>0.46&nbsp;s</b> encode, <b>0.71&nbsp;s</b> at the SRT receiver, ~2.9&nbsp;s packaged, ~3.9&nbsp;s
-            at the packager egress — packaging, not encoding, owns the budget.</li>
-          <li><b>Managed origin (retired 2026-09-13)</b> ingest into MediaPackage v2 without MediaLive carried
-            the first two months and the first production show; the QR survived its re-packaging (36/36),
-            LL-HLS with real partial segments and DASH came from one chunk set. Its limits were structural,
-            and the self-hosted origin below replaced it.</li>
-          <li><b>Self-hosted origin beats the managed one</b> 1.0&nbsp;s at the origin's egress and
-            1.08&nbsp;s at the CDN edge versus 2.5 / 2.6&nbsp;s through MediaPackage — same day, same probe
-            code, 140&nbsp;Mbps; the origin adds ~0.2&nbsp;s over the mux.</li>
-          <li><b>300&nbsp;Mbps without a cap</b> 8K HEVC at 300&nbsp;Mbps through the origin and CDN with
-            two 5.1 tracks: zero refusals, zero 503s, zero missing parts, 391&nbsp;Mbps peak on the copy rung
-            — 1.22 / 1.39&nbsp;s at origin / CDN.</li>
-          <li><b>Apple conformance</b> Apple's <code>mediastreamvalidator</code> zero MUST-fix on the origin
-            and through CloudFront (a temporary EC2 Mac); Apple's own client: first frame 1.0&nbsp;s, the 8K
-            rung within 10&nbsp;s, zero stalls.</li>
-          <li><b>Sub-segment low latency, proven</b> part-level probing at 0.25&nbsp;s parts on every
-            low-latency probe; 0.94&nbsp;s at the origin with 0.25&nbsp;s parts versus 1.34&nbsp;s with
-            0.5&nbsp;s — the granularity the low-latency story is sold at.</li>
-          <li><b>LL-DASH through the CDN</b> dash.js at 4K/60&nbsp;fps, <b>3.71&nbsp;s</b> glass to glass, its
-            own reported latency now within 0.6&nbsp;s of the frames' true age (it had been 6&nbsp;s off,
-            trusting a manifest clock stamped after ffmpeg's input probe).</li>
-          <li><b>8K in a real browser</b> hardware HEVC Main10 decode at 8K60 on the L40S player box:
-            60&nbsp;fps, <b>5.7&nbsp;s</b> glass to glass locked to the 8K rung, 3.6–3.8&nbsp;s at 1080p/4K.</li>
-          <li><b>First production show</b> 7h03m of continuous 8K60 transmission, 447&nbsp;GB through the mux,
-            recorded end to end, a venue power outage survived mid-day.</li>
-          <li><b>Per-region CDN delivery</b> measured from three edges off the self-hosted origin
-            (2026-09-12): home region ≈1.1&nbsp;s, US East ≈1.1&nbsp;s, Frankfurt ≈1.2&nbsp;s cumulative;
-            the managed-origin era read 3.6 / 4.5 / 5.4&nbsp;s — the first real geographic propagation
-            numbers, and the ones the new lane is judged against.</li>
-          <li><b>Player closes the chain</b> the Prism Player decodes the QR at playback and reports T6 — every stage T0→T6 measured in one live run.</li>
-          <li><b>The instrument checks itself</b> a one-click canary asserts every probe reported and every
-            stage measured; its first run caught a real probe defect, and the verdict trail (unhealthy →
-            fix → healthy) is on record in the audit log.</li>
-          <li><b>Cross-machine clocks</b> µs-synced to the AWS time source, so one-way SRT timing is trustworthy.</li>
-          <li><b>Multichannel audio rides free</b> 16 channels (2×7.1 AAC) through the full chain with
-            video latency moving ≤~3% at every stage — measured in paired A/B runs on the fleet, not
-            assumed. 32 channels (4×7.1) proven through a real NVENC encode locally, 32/32 per-channel
-            identity intact.</li>
-          <li><b>Channel identity is checkable live</b> any channel soloed at the source mid-run via a
-            runtime filter command (no restart, container timing untouched), auto-verdicts from the
-            player's per-channel FFT, auditable line-check records saved.</li>
-          <li><b>Quality scored where pixels change</b> VMAF v1 (4K@1.5H, native 4K windows — no
-            downscaling) + CAMBI banding, frame-exact-aligned by the QR, written into every campaign
-            report.</li>
+          <li><b>The timestamp survives encoding</b> 600 of 600 frames decoded through 8K HEVC hardware
+            encoding — the QR code comes through intact.</li>
+          <li><b>The measurement is trustworthy</b> a known +500&nbsp;ms delay added at the encode stage and
+            at the contribution stage showed up there alone (+471 and +523&nbsp;ms), with no other stage
+            moving.</li>
+          <li><b>Encoding keeps real time</b> 8K60 HEVC, split across three hardware engines — sustained
+            1.0× with zero dropped frames.</li>
+          <li><b>Stages in the right order across machines</b> true to the frame: <b>0.46&nbsp;s</b> after
+            encoding, <b>0.71&nbsp;s</b> after the contribution hop, ~2.9&nbsp;s packaged, ~3.9&nbsp;s leaving
+            the managed packager (MediaPackage era) — packaging, not encoding, owned the budget then.</li>
+          <li><b>Managed origin (retired 2026-09-13)</b> AWS MediaPackage carried the first two months and the
+            first production show without a MediaLive channel in front of it; the QR code survived its
+            re-packaging (36 of 36), and low-latency HLS and DASH came from one set of chunks. Its limits
+            were built in, and the self-hosted origin below replaced it.</li>
+          <li><b>Own origin beats the managed one</b> 1.0&nbsp;s leaving the origin and 1.1&nbsp;s at the
+            CDN edge, versus 2.5 and 2.6&nbsp;s through MediaPackage — same day, same probes, 140&nbsp;Mbps.
+            The origin itself adds about 0.2&nbsp;s.</li>
+          <li><b>300&nbsp;Mbps with nothing in the way</b> 8K HEVC at 300&nbsp;Mbps through the origin and
+            CDN with two 5.1 tracks: no refused requests, no missing chunks, peaks of 391&nbsp;Mbps on the
+            untouched 8K rendition — 1.2&nbsp;s at the origin, 1.4&nbsp;s at the edge.</li>
+          <li><b>Apple's tools pass</b> Apple's stream validator reported no must-fix items on the origin and
+            through CloudFront (run on a rented Mac); Apple's own player: first picture in 1.0&nbsp;s, the 8K
+            rendition within 10&nbsp;s, no stalls.</li>
+          <li><b>Low latency proven at chunk level</b> the probes now read quarter-second chunks, not whole
+            two-second segments: 0.94&nbsp;s at the origin with quarter-second chunks versus 1.34&nbsp;s
+            with half-second ones — measured at the granularity low latency is sold at.</li>
+          <li><b>Low-latency DASH through the CDN</b> the DASH web player at 4K, 60&nbsp;fps, <b>3.7&nbsp;s</b>
+            from glass to glass, and its own latency readout now within 0.6&nbsp;s of the picture's true
+            age (it had been 6&nbsp;s off, trusting a manifest clock stamped too late).</li>
+          <li><b>8K in a real browser</b> hardware HEVC decoding at 8K60 on the L40S viewer box: 60&nbsp;fps,
+            <b>5.7&nbsp;s</b> from glass to glass on the 8K rendition, 3.6–3.8&nbsp;s at 1080p or 4K.</li>
+          <li><b>First production show</b> 7 hours 3 minutes of continuous 8K60 transmission, 447&nbsp;GB
+            through the cloud, recorded end to end, a venue power cut survived mid-day.</li>
+          <li><b>Delivery measured per region</b> from three CDN edges off the self-hosted origin
+            (2026-09-12): home region ≈1.1&nbsp;s, US East ≈1.1&nbsp;s, Frankfurt ≈1.2&nbsp;s of total
+            delay; the MediaPackage era read 3.6, 4.5 and 5.4&nbsp;s — the first real geographic numbers,
+            and the baseline the new origin was judged against.</li>
+          <li><b>The viewer closes the chain</b> the Prism Player reads the QR code at playback and reports
+            T6 — every stage from T0 to T6 measured in one live run.</li>
+          <li><b>The instrument checks itself</b> a one-click health check confirms every probe reported and
+            every stage measured; its first run caught a real probe defect, and the trail from unhealthy to
+            fixed to healthy is on record in the audit log.</li>
+          <li><b>Clocks agree across machines</b> synchronised to the AWS time source within microseconds,
+            so one-way contribution timing is trustworthy.</li>
+          <li><b>Multichannel audio costs nothing in delay</b> 16 channels (two 7.1 tracks) through the full
+            chain moved video delay by at most about 3% at every stage — measured in paired runs on the
+            fleet, not assumed. 32 channels (four 7.1 tracks) proven through a real hardware encode locally,
+            every channel accounted for.</li>
+          <li><b>Channel identity is checkable live</b> any channel can be soloed at the source mid-run
+            without a restart; the player's per-channel analysis gives an automatic verdict and an auditable
+            line-check record is saved.</li>
+          <li><b>Picture quality scored where pixels change</b> VMAF and CAMBI (banding) scores, aligned
+            frame by frame using the QR code, written into every campaign report.</li>
           <li><b>A real camera, live</b> 8K59.94 from a cinema camera over quad-link SDI, live through the
-            whole chain: 10-minute runs at 60&nbsp;fps / 1.00× / zero drops, 75–82&nbsp;Mbps delivered, with
-            lens-referenced latency anchored by a filmed optical slate.</li>
-          <li><b>Open-ended transmission on the real estate</b> rolling window reports, a reconnecting
-            contribution, and honest drop accounting — a live 20&nbsp;s packager outage was counted as one
-            26.2&nbsp;s drop window and the run survived it.</li>
-          <li><b>Contribution rail at the ceiling</b> streamid-filtered SRT ingest held 8K59.94 HEVC at
-            140&nbsp;Mbps with zero drops on worst-case content; between-session refresh is automatic and
-            re-entry takes seconds.</li>
-          <li><b>Surround at the edge</b> two 5.1 tracks through the self-hosted origin and CDN with 6/6
-            channel identity confirmed at 140 and 300&nbsp;Mbps (5.1 through the managed origin before that);
-            wire formats are measured per encoder build and unsurvivable layouts are refused before they
-            ship.</li>
-          <li><b>Fractional-rate exactness</b> at 59.94 the declared and delivered segment durations agree
-            to the microsecond (whole-GOP segment snapping + actual-duration manifests) — cadence drift is
-            structurally gone.</li>
-          <li><b>Recording &amp; remote contribution</b> streaming capture to object storage with integrity
-            hashes and frame-exact clips; on-prem encoder boxes join the fleet and start/stop their SRT
-            contribution from the console over an outbound-only control plane.</li>
+            whole chain: 10-minute runs at 60&nbsp;fps, 1.00×, zero drops, 75–82&nbsp;Mbps delivered, with
+            delay measured from the lens using the filmed clock.</li>
+          <li><b>Open-ended transmission on the real estate</b> rolling reports, a contribution link that
+            reconnects, and honest outage accounting — a live 20-second packager outage was counted as one
+            26.2-second gap and the run survived it.</li>
+          <li><b>Contribution at the ceiling</b> the receiver held 8K59.94 HEVC at 140&nbsp;Mbps with zero
+            drops on worst-case content; it refreshes itself between sessions and re-entry takes seconds.</li>
+          <li><b>Surround at the edge</b> two 5.1 tracks through the self-hosted origin and CDN with every
+            channel where it belongs at 140 and 300&nbsp;Mbps (5.1 through the managed origin before that);
+            audio layouts that would not survive packaging are refused before they ship.</li>
+          <li><b>Fractional frame rates, exactly</b> at 59.94 fps the declared and delivered segment lengths
+            agree to the microsecond, at any cadence — timing drift is structurally gone.</li>
+          <li><b>Recording and remote contribution</b> streaming capture to object storage with integrity
+            hashes and frame-exact clips; on-site encoder boxes join the fleet and start and stop their
+            contribution from the console, with no inbound access needed at the venue.</li>
         </ul>
       </div>
 
       <div class="status-col todo">
         <div class="status-head"><h3>Still to validate</h3><span class="count">4 open</span></div>
-        <p class="sub">Width, endurance, and resilience — none blocks the core numbers.</p>
+        <p class="sub">Wider audio, endurance and resilience — none blocks the core numbers.</p>
         <ul class="status-list">
-          <li><b>8-channel audio from the fleet encoder</b> its ffmpeg build cannot emit a self-describing
-            8-channel layout, and every fragmented-MP4 packager drops the in-band descriptor it would need;
-            the on-prem box's build can, and 8 channels have passed through the origin on the bench. Two
-            5.1 tracks are proven at the edge.</li>
-          <li><b>Multi-hour soak of the origin</b> the seven-hour show ran on the managed origin; the
-            self-hosted lane has 15-minute runs on record. A four-hour soak is the next fleet day.</li>
-          <li><b>Encoder redundancy &amp; sync</b> run a hot-standby encoder frame- and timecode-aligned with
-            the primary, and exercise the failover workflow end to end.</li>
-          <li><b>Camera-clock discipline</b> the filmed-slate acquisition stage is live; a PTP-disciplined
-            camera clock is what tightens the lens-referenced numbers further. Hardware specified.</li>
+          <li><b>8-channel audio from the cloud encoder</b> its encoder build cannot label an 8-channel layout
+            in a form packagers keep; the on-site encoder's build can, and 8 channels have passed through
+            the origin on the bench. Two 5.1 tracks are proven at the edge today.</li>
+          <li><b>A multi-hour run on the new origin</b> the seven-hour show ran on the managed origin; the
+            self-hosted origin has 15-minute runs on record. A four-hour soak is the next fleet day.</li>
+          <li><b>Encoder redundancy</b> a hot-standby encoder kept frame- and timestamp-aligned with the
+            primary, and the failover exercised end to end.</li>
+          <li><b>Camera clock discipline</b> the filmed-clock camera stage is live; a PTP-disciplined camera
+            clock is what tightens the lens-referenced numbers further. Hardware specified.</li>
         </ul>
       </div>
     </div>
@@ -698,19 +704,22 @@
     <div class="roadmap">
       <div class="lane next">
         <div class="lane-head"><h3>From instrument to findings</h3><span class="lane-tag">Up next</span></div>
-        <p class="sub">The ruler is trusted and the biggest cost it found is gone — now endurance and the viewer.</p>
+        <p class="sub">The ruler is trusted and the biggest cost it found is gone — next, endurance and the viewer's own delay.</p>
         <ul class="feat">
-          <li><b>Soak and fan-in</b> — a four-hour run on the self-hosted origin (the show-night bar is
-            seven), then hundreds of players against CloudFront's request collapsing.</li>
-          <li><b>Lower the viewer's live target</b> — T6 is the CDN edge plus a 3&nbsp;s player target, plus
-            up to 2&nbsp;s of hls.js's stall rule at 8K; 1&nbsp;s segments, a 2&nbsp;s target at 4K and a
-            shorter DASH live delay are the untried dials, one fleet hour each.</li>
-          <li><b>Roles &amp; administration</b> — admin / operator / partner scoping enforced at
-            the API, with in-app sign-in, user management and a per-person audit trail:
-            collaborators get the monitor and read-only results, never the sharp tools.
-            <b>Shipped 2026-08-06, email identity and partner access 2026-08-12.</b></li>
-          <li><b>Encoder redundancy &amp; sync</b> — a hot-standby encoder kept frame- and timecode-aligned, with tested failover.</li>
-          <li><b>Player race mode</b> — LL-HLS, HLS, and DASH playing the same stream side by side, each with its own latency readout.</li>
+          <li><b>Endurance and scale</b> — a four-hour run on the new origin (the show-night bar is seven),
+            then hundreds of simultaneous viewers to prove the CDN absorbs the load.</li>
+          <li><b>Shorten the viewer's own delay</b> — of the 3.7–5.7&nbsp;s a viewer sees, 3&nbsp;s is the
+            player's safety buffer and, at 8K, up to 2&nbsp;s more comes from the web player widening that
+            buffer after stalls. One-second segments, a two-second buffer at 4K and a shorter DASH delay are
+            the untried settings, one fleet hour each.</li>
+          <li><b>Roles &amp; administration</b> — admin, operator and partner roles enforced on every action,
+            with in-app sign-in, user management and a per-person audit trail: collaborators get the monitor
+            and read-only results, never the sharp tools. <b>Shipped 2026-08-06; email identity and partner
+            access 2026-08-12.</b></li>
+          <li><b>Encoder redundancy</b> — a hot-standby encoder kept frame- and timestamp-aligned, with
+            tested failover.</li>
+          <li><b>Player race mode</b> — low-latency HLS, standard HLS and DASH playing the same stream side by
+            side, each with its own delay readout.</li>
         </ul>
       </div>
 
@@ -718,15 +727,14 @@
         <div class="lane-head"><h3>Broadening the instrument</h3><span class="lane-tag">Planned</span></div>
         <p class="sub">More formats and modes for the pipelines you actually run.</p>
         <ul class="feat">
-          <li><b>A/V sync gate + audio latency artifact</b> — the video QR has an audio sibling coming (an
-            in-band data channel carrying the same epoch payload), enabling measured audio-path latency and
-            lip-sync verdicts, not just channel identity.</li>
-          <li><b>Simultaneous multi-track playback semantics</b> — HLS lists N audio tracks as alternatives;
-            proving all-tracks-at-once delivery semantics per surface is an open question with a session
-            planned around it.</li>
-          <li><b>LL-DASH probing</b> — the real player measures LL-DASH today (3.7&nbsp;s at 4K); the
-            lightweight per-region probes still poll HLS only.</li>
-          <li><b>VVC (H.266) support</b> — bring the next-generation codec into the encoder lineup.</li>
+          <li><b>Lip-sync and audio delay</b> — a timestamp carried in the audio as well as the picture, so
+            audio-path delay and lip-sync get measured verdicts, not just channel identity.</li>
+          <li><b>Several audio tracks at once</b> — HLS treats multiple audio tracks as alternatives; whether
+            every delivery surface can carry all of them together is an open question with a session planned
+            around it.</li>
+          <li><b>Low-latency DASH on the probes</b> — the reference viewer measures low-latency DASH today
+            (3.7&nbsp;s at 4K); the lightweight per-region probes still poll HLS only.</li>
+          <li><b>VVC (H.266) support</b> — bring the next-generation codec into the encoder line-up.</li>
         </ul>
       </div>
 
@@ -734,16 +742,17 @@
         <div class="lane-head"><h3>Reach &amp; production</h3><span class="lane-tag">Exploratory</span></div>
         <p class="sub">The larger platform Prism is growing toward.</p>
         <ul class="feat">
-          <li><b>Hardware PTP clock</b> — the on-prem contributor disciplined by a GPS PTP grandmaster,
+          <li><b>Hardware PTP clock</b> — the on-site encoder disciplined by a GPS-locked PTP grandmaster,
             tightening lens-referenced timing further. Hardware specified and priced; the camera chain
             itself is now proven (see Validated).</li>
-          <li><b>Super-resolution, census-first</b> — frontier upscalers measured honestly on the fleet GPU:
-            the first census point puts diffusion-based 4K→8K at ~0.12&nbsp;fps (~500× off real time) on a
-            single 48&nbsp;GB card via 2×2 tiling. Realtime remains a 1080p→4K story; venue-scale needs
-            multi-GPU tiling. The curve, not the hype, drives what ships.</li>
-          <li><b>Venue playout integration</b> — a real venue media server pulling LL-HLS / LL-DASH from the
-            origin, closing the last hop.</li>
-          <li><b>More edge regions</b> — the two-continent probe fleet is live and one script-run per region to grow (Asia-Pacific, South America).</li>
+          <li><b>Super-resolution, measured first</b> — frontier upscalers tested honestly on the fleet GPU:
+            the first data point puts diffusion-based 4K→8K at about 0.12&nbsp;fps (roughly 500× slower
+            than real time) on a single 48&nbsp;GB card. Real time remains a 1080p→4K story; venue scale
+            needs many GPUs. The curve, not the hype, decides what ships.</li>
+          <li><b>Venue playout integration</b> — a real venue media server pulling low-latency HLS or DASH
+            from the origin, closing the last hop.</li>
+          <li><b>More edge regions</b> — the two-continent probe fleet is live, and adding a region is one
+            script run (Asia-Pacific, South America).</li>
         </ul>
       </div>
     </div>
@@ -751,13 +760,13 @@
 
   <footer class="foot">
     <span class="badge">Honest by design</span>
-    <p>Every stage is labeled <span class="tag-m">measured</span>, <span class="tag-d">derived</span>, or
+    <p>Every stage is labelled <span class="tag-m">measured</span>, <span class="tag-d">derived</span>, or
       <span class="tag-n">not&nbsp;measured</span> — Prism never presents an estimate as a measurement.
-      T1/T2 are measured per frame on the instrumented path; T3–T5 are freshness readings taken wherever a
-      real endpoint serves (per part on the low-latency lane); T6 is read off a real browser's rendered
-      frame. When the instrument itself was the problem — as its own health check proved once, and as the
-      part matcher and the DASH manifest clock proved since — the numbers were corrected and the old ones
-      retracted. What it can't observe cleanly, it says so.</p>
+      Encode and contribution are measured frame by frame; the receiver, the origin and the CDN edge are
+      read from the newest chunk a real server hands out; the viewer figure is read off a real browser's
+      picture. When the instrument itself was the problem — its own health check proved that once, and a
+      probe bug and a mis-stamped manifest clock proved it since — the numbers were corrected and the old
+      ones retracted. What it cannot observe cleanly, it says so.</p>
   </footer>
 
 </div>
