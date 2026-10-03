@@ -1,6 +1,5 @@
-# Prism — overview
+# Prism overview — moved
 
-Static overview of **Prism**, a video-latency measurement instrument.
-Live: https://ionbattle.github.io/prism-overview/
-
-The Prism codebase is maintained in a separate private repository.
+The public Prism overview is now served at **https://overview.prismstream.link/** (source:
+`stream-console/docs/index.html`, published to the console box). This repository only keeps
+a forwarding page at the old GitHub Pages address, `https://ionbattle.github.io/prism-overview/`.
